@@ -5,6 +5,13 @@ Requires at least: 4.8
 Tested up to: 4.8.1
 Stable tag: .1
 
+============== IMPORTANT NOTE ==============
+
+This plugin is still under active development
+and not ready for use.
+
+============== IMPORTANT NOTE ==============
+
 Automatically parse submitted URLs to create posts.
 
 == Description ==
