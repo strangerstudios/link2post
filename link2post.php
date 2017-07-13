@@ -54,12 +54,14 @@ function l2p_processURL($url = NULL) {
 	}
 	//echo($url);
 	
+	
 	//no  URL, bail
 	if(empty($url))
 		return;
 		
 	//Load modules
 	require_once(dirname(__FILE__) . '/modules/gist.php');
+	require_once(dirname(__FILE__) . '/modules/youtube.php');
 	
 	//each element in array should be [host=>callback_function]
 	$modules = apply_filters('l2p_modules', array());
@@ -79,18 +81,22 @@ function l2p_processURL($url = NULL) {
 	//use HTTP API to access the URL
 	require_once(dirname(__FILE__).'/lib/hQuery/hquery.php');
 	duzun\hQuery::$cache_path = dirname(__FILE__).'/lib/hQuery/cache/';
-    $doc = hQuery::fromUrl($url);
-    
-	//scrape the title
-	$title = $doc->find('title');
-	echo($title);
+    try{
+		$doc = hQuery::fromUrl($url);
 	
-	//scrape the description
-	//$description = $doc->find('');
-	//echo($description);
+		//scrape the title
+		$title = $doc->find('title');
+		echo($title);
+		//scrape the description
+		//$description = $doc->find('');
+		//echo($description);
 	
-	//create a link post and insert it
+		//create a link post and insert it
+	}catch (Exception $e) {
+    	echo 'Caught exception: ',  $e->getMessage(), "\n";
+    }
 }
+
 
 function l2p_processURLWithModule($url, $module) {
 	
