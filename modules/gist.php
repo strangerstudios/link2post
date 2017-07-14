@@ -8,80 +8,72 @@ add_filter('l2p_modules', 'l2p_add_gist_module');
 
 //callback to process a URL that is from gist.github.com_address
 function l2p_gist_callback($url){
+	global $current_user, $wpdb;
+
 	//check if we've already processed this URL
-	echo("CALLED BACK TO GIST FOR ".$url);
-
-	//Set up hQuery
-	require_once(dirname(__FILE__).'/../lib/hQuery/hquery.php');
-	duzun\hQuery::$cache_path = dirname(__FILE__).'/../lib/hQuery/cache/';
-	$gist_page = hQuery::fromUrl($url);
-
-	//grab title from title element
-	echo("</br>");
-	$title = $gist_page->find('.gist-header-title > a'); //specific to github, but title tag doesnt point to title doesnt give correct value
-	echo($title);
-
-	//grab description from meta element
-	echo("</br>");
-	$description = $gist_page->find('.repository-meta-content');
-	echo($description);
-
-	//try to figure out author (we need to figure out how to cross reference github usernames with WP users)
-	//find author's username
-	$path_exploded = explode("/", parse_url($url, PHP_URL_PATH));
-	$author_username = $path_exploded[1];
-	echo("</br>");
-	echo($author_username);
-
-	//find author's email
-	$github_accnt_url = 'https://github.com/'.$author_username;
-	$github_accnt_page = hQuery::fromUrl($github_accnt_url);
-	//$author_email = $github_accnt_page->find('u-email'); 
-	//can't get email if user is not logged in
-	//https://www.eremedia.com/sourcecon/how-to-find-almost-any-github-users-email-address/
+	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
+	$old_post_id = $wpdb->get_var($sqlQuery);
 	
-	//grab the gist ID
-	$gist_ID = $path_exploded[2];
-	echo("</br>");
-	echo($gist_ID);
+	if(!empty($old_post_id)) {
+		$post_url = get_permalink($old_post_id);		
+		echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';;
+	} else {
+		//Set up selector
+		require_once(L2P_DIR.'/lib/selector.php');
+		$html = wp_remote_retrieve_body(wp_remote_get($url));
 
-	//maybe store the code in a field we can search on later
-	$github_raw_code_url = $url.'/raw';
-	$github_raw_code_page = hQuery::fromUrl($github_raw_code_url);
-	echo("</br>");
-	echo(htmlspecialchars($github_raw_code_page)); 
+		//grab title from title element
+		$title = l2p_SelectorDOM::select_element('.repository-meta-content', $html);
+		if(!empty($title) && !empty($title['text']))
+					$title = sanitize_text_field($title['text']);
 	
+		//grab description from multiline comment
+		$raw_code_url = $url.'/raw';
+		$raw_code_page = wp_remote_retrieve_body(wp_remote_get($raw_code_url));
+		$code = " ".htmlspecialchars($raw_code_page); 
+		$start = '/*';
+		$end = '*/';
+		$ini = strpos($code,$start);
+		if ($ini == 0){
+			$description = "";
+		}
+		else{
+			$ini += strlen($start);   
+			$len = strpos($code,$end,$ini) - $ini;
+			$description = substr($code,$ini,$len);
+		}
 	
-	//grab code and maybe pull description from first comment
-	//Single-line Comments
-	$single_comments = $gist_page->find('.pl-c');
-	echo("</br>");
-	echo($single_comments);
+		//add embed code to post body
+		$embed_code = '<script src="'.$url.'.js"></script>';
 	
-	//Multiline Comments
-	//referencing http://www.justin-cook.com/2006/03/31/php-parse-a-string-between-two-strings/
-	$code = " ".htmlspecialchars($github_raw_code_page);
-	$start = '/*';
-	$end = '*/';
-	$ini = strpos($code,$start);
-	if ($ini == 0){
-		$multiline_comment = "";
+		//get author's username
+		$path_exploded = explode("/", parse_url($url, PHP_URL_PATH));
+		$author_username = $path_exploded[1];
+	
+		//get author's GitHub profile
+		$github_profile_url = 'https://github.com/'.$author_username;
+
+		//format post content
+		$break = "</br>";
+		$post_content = $description.$break.$embed_code.$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
+		
+		//insert a Gist CPT
+		$postarr = array(
+				'post_type' => 'gist',
+				'post_title' => $title,
+				'post_content' => $post_content,
+				'post_author' => $current_user->ID,
+				'post_status' => 'publish',
+				'meta_input' => array(
+					'l2p_url' => $url,
+				)
+			);
+		$post_id = wp_insert_post($postarr);
+		$post_url = get_permalink($post_id);
+			
+		echo '<hr />';
+		echo __('New Gist Post:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';
 	}
-	else{
-		$ini += strlen($start);   
-		$len = strpos($code,$end,$ini) - $ini;
-		$multiline_comment = substr($code,$ini,$len);
-	}
-	echo("</br>");
-	echo($multiline_comment);
-
-
-	//add embed code to post body
-	$embed_code = '<script src="'.$url.'.js"></script>';
-	echo("</br>");
-	echo(htmlspecialchars($embed_code));
-
-	//insert a Gist CPT
 }
 
 //do we need embed code?
