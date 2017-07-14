@@ -16,6 +16,13 @@ Text Domain: link2post
 */
 
 /*
+	Load modules
+*/
+define('L2P_DIR', dirname(__FILE__));
+require_once(L2P_DIR . '/modules/gist.php');
+require_once(L2P_DIR . '/modules/youtube.php');
+
+/*
 	Add Admin Page
 */
 function l2p_admin_pages() {
@@ -49,52 +56,85 @@ add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 	Process a Form Submission
 */
 function l2p_processURL($url = NULL) {
+	global $current_user, $wpdb;
+	
 	if(empty($url) && !empty($_REQUEST['l2purl'])) {
 		$url = esc_url_raw($_REQUEST['l2purl']);		
 	}
 	//echo($url);
 	
 	
-	//no  URL, bail
+	//no URL, bail
 	if(empty($url))
-		return;
+		return;			
 		
-	//Load modules
-	require_once(dirname(__FILE__) . '/modules/gist.php');
-	require_once(dirname(__FILE__) . '/modules/youtube.php');
-	
-	//each element in array should be [host=>callback_function]
+	/**
+	 * Filter to add Link2Post modules. Modules are used to handle parsing
+	 * for URLs from specific sites.
+	 *
+	 * @since .1
+	 *
+	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
+	 */
 	$modules = apply_filters('l2p_modules', array());
-	
-	//Check the domain of the URL to see if it matches a module
+		
+	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
 	foreach($modules as $module_host => $callback_function) {
     	if($host == $module_host){
-    		call_user_func($callback_function, $url);
+    		//we found one, use the module's parse function now
+			call_user_func($callback_function, $url);
     		return;
     	}
 	}
-	//else default stuff below
 	
-	//check if we've already processed this URL
+	//No modules were found for this host, so we'll do the default behavior.
 	
+	//check if we've already processed this URL			TODO: Should we update if it's already found?
+	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
+	$old_post_id = $wpdb->get_var($sqlQuery);
 	
-	//use HTTP API to access the URL
-	require_once(dirname(__FILE__).'/lib/hQuery/hquery.php');
-	duzun\hQuery::$cache_path = dirname(__FILE__).'/lib/hQuery/cache/';
-    try{
-		$doc = hQuery::fromUrl($url);
-	
-		//scrape the title
-		$title = $doc->find('title');
-		echo($title);
-		
-		//scrape the description
-		//$description = $doc->find('');
-		//echo($description);
-	
-		//create a link post and insert it
-	}catch (Exception $e) {
-    	echo 'Caught exception: ',  $e->getMessage(), "\n";
-    }
+	if(!empty($old_post_id)) {
+		$post_url = get_permalink($old_post_id);		
+		echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';;
+	} else {
+		//load the URL and parse
+		require_once(dirname(__FILE__).'/lib/selector.php');	
+		try{
+			$html = wp_remote_retrieve_body(wp_remote_get($url));
+					
+			//scrape the title
+			$title = l2p_SelectorDOM::select_element('title', $html);
+			if(!empty($title) && !empty($title['text']))
+				$title = sanitize_text_field($title['text']);
+			
+			//scrape the description
+			$description = l2p_SelectorDOM::select_element('meta[name=description]', $html);
+			if(!empty($description) && !empty($description['attributes']) && !empty($description['attributes']['content']))
+				$description = sanitize_text_field($description['attributes']['content']);
+			
+			//add link back to the URL to the description:
+			$description .= "\n\n" . sprintf(__('Originally post at %s.', 'link2post'), '<a href="' . esc_url($url) . '">' . $host . '</a>');
+			
+			//create a link post and insert it
+			$postarr = array(
+				'post_type' => 'post',
+				'post_title' => $title,
+				'post_content' => $description,
+				'post_author' => $current_user->ID,
+				'post_status' => 'publish',
+				'meta_input' => array(
+					'l2p_url' => $url,
+				)
+			);
+			
+			$post_id = wp_insert_post($postarr);
+			$post_url = get_permalink($post_id);
+			
+			echo '<hr />';
+			echo __('New Post:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';				
+		}catch (Exception $e) {
+			echo 'Caught exception: ',  $e->getMessage(), "\n";
+		}
+	}		
 }

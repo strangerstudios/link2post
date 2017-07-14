@@ -82,13 +82,12 @@ function l2p_gist_callback($url){
 	echo(htmlspecialchars($embed_code));
 
 	//insert a Gist CPT
-	
-
+}
 
 //do we need embed code?
 
 //add a GitHub Gist CPT
-function create_gist_cpt() {
+function create_gist_cpt() {  
   register_post_type( 'gist',
     array(
       'labels' => array(
@@ -113,4 +112,3 @@ add_action( 'init', 'create_gist_cpt' );
 //handle search and archives
 
 //widget for related posts
-}
