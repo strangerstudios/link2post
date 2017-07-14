@@ -78,6 +78,7 @@ function l2p_processURL($url = NULL) {
 	
 	//check if we've already processed this URL
 	
+	
 	//use HTTP API to access the URL
 	require_once(dirname(__FILE__).'/lib/hQuery/hquery.php');
 	duzun\hQuery::$cache_path = dirname(__FILE__).'/lib/hQuery/cache/';
@@ -87,6 +88,7 @@ function l2p_processURL($url = NULL) {
 		//scrape the title
 		$title = $doc->find('title');
 		echo($title);
+		
 		//scrape the description
 		//$description = $doc->find('');
 		//echo($description);
@@ -95,9 +97,4 @@ function l2p_processURL($url = NULL) {
 	}catch (Exception $e) {
     	echo 'Caught exception: ',  $e->getMessage(), "\n";
     }
-}
-
-
-function l2p_processURLWithModule($url, $module) {
-	
 }
