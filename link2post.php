@@ -20,7 +20,7 @@ Text Domain: link2post
 */
 define('L2P_DIR', dirname(__FILE__));
 require_once(L2P_DIR . '/modules/gist.php');
-require_once(L2P_DIR . '/modules/youtube.php');
+//require_once(L2P_DIR . '/modules/youtube.php');
 
 /*
 	Add Admin Page

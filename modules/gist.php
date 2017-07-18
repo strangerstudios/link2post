@@ -44,7 +44,7 @@ function l2p_gist_callback($url){
 		}
 	
 		//add embed code to post body
-		$embed_code = '<script src="'.$url.'.js"></script>';
+		$embed_code = $url;
 	
 		//get author's username
 		$path_exploded = explode("/", parse_url($url, PHP_URL_PATH));
@@ -54,9 +54,20 @@ function l2p_gist_callback($url){
 		$github_profile_url = 'https://github.com/'.$author_username;
 
 		//format post content
-		$break = "</br>";
-		$post_content = $description.$break.$embed_code.$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
+		$break = " </br> ";
+		$post_content = $description.$break."\n".$embed_code."\n".$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
 		
+		//get OG image, CAN'T GET THIS TO WORK
+		/*
+		$img_link = l2p_SelectorDOM::select_element('meta', $html);
+		var_dump($img_link);
+		if(!empty($img_link) && !empty($img_link['attributes']) && !empty($img_link['attributes']['content'])){
+			$img_link = sanitize_text_field($img_link['attributes']['content']);
+			echo("sanitized");
+		}
+		echo($img_link);
+		*/
+
 		//insert a Gist CPT
 		$postarr = array(
 				'post_type' => 'gist',
