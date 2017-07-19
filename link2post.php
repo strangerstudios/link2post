@@ -19,19 +19,26 @@ Text Domain: link2post
 	Load modules
 */
 define('L2P_DIR', dirname(__FILE__));
-require_once(L2P_DIR . '/modules/gist.php');
+if(get_option("l2p_gist_enabled")=="enabled"){
+	require_once(L2P_DIR . '/modules/gist.php');
+}
 //require_once(L2P_DIR . '/modules/youtube.php');
 
 /*
 	Add Admin Page
 */
 function l2p_admin_pages() {
-	add_submenu_page( 'tools.php', 'Link2Post', 'Link2Post', 'edit_posts', 'link2post', 'l2p_admin_pages_main' );
+	add_submenu_page( 'tools.php', 'Link2Post', 'Link2Post', 'edit_posts', 'link2post_tools', 'l2p_admin_tool_pages_main' );
+	add_submenu_page( 'options-general.php', 'Link2Post', 'Link2Post', 'edit_posts', 'link2post_settings', 'l2p_admin_settings_pages_main' );
 }
 add_action('admin_menu', 'l2p_admin_pages');
 
-function l2p_admin_pages_main() {
-	require_once(dirname(__FILE__) . '/adminpages/link2post.php');
+function l2p_admin_tool_pages_main() {
+	require_once(dirname(__FILE__) . '/adminpages/link2post_tools.php');
+}
+
+function l2p_admin_settings_pages_main() {
+	require_once(dirname(__FILE__) . '/adminpages/link2post_settings.php');
 }
 
 
@@ -48,7 +55,7 @@ function l2p_admin_bar_menu() {
 		'id' => 'link2post',
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
-		'href' => get_admin_url(NULL, '/tools.php?page=link2post') ) );
+		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 
@@ -102,7 +109,7 @@ function l2p_processURL($url = NULL) {
 		require_once(dirname(__FILE__).'/lib/selector.php');	
 		try{
 			$html = wp_remote_retrieve_body(wp_remote_get($url));
-					
+			
 			//scrape the title
 			$title = l2p_SelectorDOM::select_element('title', $html);
 			if(!empty($title) && !empty($title['text']))
@@ -112,9 +119,12 @@ function l2p_processURL($url = NULL) {
 			$description = l2p_SelectorDOM::select_element('meta[name=description]', $html);
 			if(!empty($description) && !empty($description['attributes']) && !empty($description['attributes']['content']))
 				$description = sanitize_text_field($description['attributes']['content']);
+			else{
+				$description = "";
+			}
 			
 			//add link back to the URL to the description:
-			$description .= "\n\n" . sprintf(__('Originally post at %s.', 'link2post'), '<a href="' . esc_url($url) . '">' . $host . '</a>');
+			$description .= "\n\n" . sprintf(__('Originally posted at %s.', 'link2post'), '<a href="' . esc_url($url) . '">' . $host . '</a>');
 			
 			//create a link post and insert it
 			$postarr = array(

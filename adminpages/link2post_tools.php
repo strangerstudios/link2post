@@ -8,7 +8,7 @@
 	
 	<form>
 		<label for="l2purl">URL:</label>
-		<input type="hidden" name="page" value="link2post" />
+		<input type="hidden" name="page" value="link2post_tools" />
 		<input type="text" id="l2purl" name="l2purl" />
 		<input type="submit" />
 	</form>

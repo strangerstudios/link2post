@@ -13,7 +13,7 @@ function l2p_gist_callback($url){
 	//check if we've already processed this URL
 	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
 	$old_post_id = $wpdb->get_var($sqlQuery);
-	
+
 	if(!empty($old_post_id)) {
 		$post_url = get_permalink($old_post_id);		
 		echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';;
@@ -26,7 +26,9 @@ function l2p_gist_callback($url){
 		$title = l2p_SelectorDOM::select_element('.repository-meta-content', $html);
 		if(!empty($title) && !empty($title['text']))
 					$title = sanitize_text_field($title['text']);
-	
+		else{
+			$title="Title is empty";
+		}
 		//grab description from multiline comment
 		$raw_code_url = $url.'/raw';
 		$raw_code_page = wp_remote_retrieve_body(wp_remote_get($raw_code_url));
@@ -38,25 +40,31 @@ function l2p_gist_callback($url){
 			$description = "";
 		}
 		else{
-			$ini += strlen($start);   
-			$len = strpos($code,$end,$ini) - $ini;
-			$description = substr($code,$ini,$len);
+			$before_description = substr($code, 0, $ini);
+			$trimmed = trim($before_description);
+			if($trimmed == '' or $trimmed == htmlspecialchars('<?php')){
+				$ini += strlen($start);   
+				$len = strpos($code,$end,$ini) - $ini;
+				$description = substr($code,$ini,$len);
+				$description = trim(str_replace ( " *" , "" , $description));
+				$description = trim(str_replace ( "*" , "" , $description));
+			}
+			else{
+				$description = "";
+			}
 		}
-	
 		//add embed code to post body
 		$embed_code = $url;
 	
 		//get author's username
 		$path_exploded = explode("/", parse_url($url, PHP_URL_PATH));
 		$author_username = $path_exploded[1];
-	
 		//get author's GitHub profile
 		$github_profile_url = 'https://github.com/'.$author_username;
 
 		//format post content
 		$break = " </br> ";
 		$post_content = $description.$break."\n".$embed_code."\n".$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
-		
 		//get OG image, CAN'T GET THIS TO WORK
 		/*
 		$img_link = l2p_SelectorDOM::select_element('meta', $html);
