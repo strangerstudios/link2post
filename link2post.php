@@ -102,8 +102,20 @@ function l2p_processURL($url = NULL) {
 	$old_post_id = $wpdb->get_var($sqlQuery);
 	
 	if(!empty($old_post_id)) {
-		$post_url = get_permalink($old_post_id);		
-		echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';;
+		if(empty($_REQUEST['l2poverwrite'])) {
+			$post_url = get_permalink($old_post_id);		
+			echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.';
+			$current_url="http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+			echo __('<br><br>Would you like to overwrite it? ').'<a href="'.$current_url.'&l2poverwrite=true">'.__('Yes   ').'</a><a href="'.$current_url.'&l2poverwrite=false">'.__('No').'</a>';
+		}
+		elseif($_REQUEST['l2poverwrite']=="true"){
+			$post_url = get_permalink($old_post_id);	
+			echo('Updating post at <a href="' . $post_url . '">' . $post_url . '</a>.');
+		}
+		elseif($_REQUEST['l2poverwrite']=="false"){
+			echo("Post not updated.");
+		}
+		
 	} else {
 		//load the URL and parse
 		require_once(dirname(__FILE__).'/lib/selector.php');	
@@ -114,6 +126,9 @@ function l2p_processURL($url = NULL) {
 			$title = l2p_SelectorDOM::select_element('title', $html);
 			if(!empty($title) && !empty($title['text']))
 				$title = sanitize_text_field($title['text']);
+			else{
+				$title = "";
+			}
 			
 			//scrape the description
 			$description = l2p_SelectorDOM::select_element('meta[name=description]', $html);
