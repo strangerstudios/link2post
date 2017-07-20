@@ -44,6 +44,19 @@ function l2p_admin_settings_pages_main() {
 
 /*
 	Add Form to Admin Bar
+	
+	add_action( 'admin_bar_menu', 'my_new_toolbar_item', 999 );
+
+	function my_new_toolbar_item( $wp_admin_bar ) {
+		$args = array(
+			'id'    => 'link2post_toolbar',
+			//'title' => 'Link2Post',
+			'title' => 'Link2Post: <form><input type="text" style="height:15px;"><input type="submit"></form>',
+			//'href'  => admin_url() . 'options-media.php',
+		);
+		$wp_admin_bar->add_node( $args );
+	}
+	
 */
 function l2p_admin_bar_menu() {
 	global $wp_admin_bar;
@@ -56,6 +69,11 @@ function l2p_admin_bar_menu() {
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
 		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
+		
+	$wp_admin_bar->add_menu( array(
+		'id' => 'l2p_input',
+		'parent' => 'link2post',
+		'title' => '<form><input type="text" style="height:22px;"> <input type="submit" style="height:30px;"></form>') );
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 
