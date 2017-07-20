@@ -73,7 +73,15 @@ function l2p_processURL($url = NULL) {
 	
 	//no URL, bail
 	if(empty($url))
-		return;			
+		return;	
+		
+	//check if we've already processed this URL			TODO: Should we update if it's already found?
+	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
+	$old_post_id = $wpdb->get_var($sqlQuery);
+	
+	//if either of these are true, the page will be scraped
+	$new_post = empty($old_post_id);
+	$update_post = false;		
 		
 	/**
 	 * Filter to add Link2Post modules. Modules are used to handle parsing
@@ -87,36 +95,71 @@ function l2p_processURL($url = NULL) {
 		
 	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
-	foreach($modules as $module_host => $callback_function) {
+	foreach($modules as $module_host => $arr) {
     	if($host == $module_host){
     		//we found one, use the module's parse function now
-			call_user_func($callback_function, $url);
+    		
+    		if(empty($arr['callback'])){
+    			echo __("Broken callback function.", 'link2post');
+    			return;
+    		}
+    	
+    		if($new_post==true){
+    			//new post, so not udating
+				call_user_func($arr['callback'], $url);
+				return;
+			}
+			
+			//updating
+			$post_url = get_permalink($old_post_id);
+			if(empty($arr['can_update']) || $arr['can_update']==false){
+				//module can't update
+				echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.<br>' . __('The module for this post type is not capable of updating.', 'link2post');
+				return;
+			}
+			
+			//module can update
+			if(empty($_REQUEST['l2poverwrite'])) {
+				$post_url = get_permalink($old_post_id);		
+				echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.';
+				$current_url="http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+				echo __('<br>Would you like to overwrite it? ').'<a href="'.$current_url.'&l2poverwrite=true">'.__('Yes   ').'</a><a href="'.$current_url.'&l2poverwrite=false">'.__('No').'</a>';
+				return;
+			}
+			elseif($_REQUEST['l2poverwrite']=="true"){
+				call_user_func($arr['callback'], $url, $old_post_id);
+				return;
+			}
+			elseif($_REQUEST['l2poverwrite']=="false"){
+				echo("Post not updated.");
+				return;
+			}
     		return;
     	}
 	}
 	
-	//No modules were found for this host, so we'll do the default behavior.
+	//no modules were found for this host, so we'll do the default behavior.
 	
-	//check if we've already processed this URL			TODO: Should we update if it's already found?
-	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
-	$old_post_id = $wpdb->get_var($sqlQuery);
-	
-	if(!empty($old_post_id)) {
+	//if post already exists
+	if(!$new_post) {
 		if(empty($_REQUEST['l2poverwrite'])) {
 			$post_url = get_permalink($old_post_id);		
 			echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.';
 			$current_url="http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 			echo __('<br><br>Would you like to overwrite it? ').'<a href="'.$current_url.'&l2poverwrite=true">'.__('Yes   ').'</a><a href="'.$current_url.'&l2poverwrite=false">'.__('No').'</a>';
+			return;
 		}
 		elseif($_REQUEST['l2poverwrite']=="true"){
-			$post_url = get_permalink($old_post_id);	
-			echo('Updating post at <a href="' . $post_url . '">' . $post_url . '</a>.');
+			$update_post = true;
 		}
 		elseif($_REQUEST['l2poverwrite']=="false"){
 			echo("Post not updated.");
+			return;
 		}
-		
-	} else {
+	} 
+	
+	//scraping
+	if($new_post==true || $update_post==true){
 		//load the URL and parse
 		require_once(dirname(__FILE__).'/lib/selector.php');	
 		try{
@@ -141,23 +184,38 @@ function l2p_processURL($url = NULL) {
 			//add link back to the URL to the description:
 			$description .= "\n\n" . sprintf(__('Originally posted at %s.', 'link2post'), '<a href="' . esc_url($url) . '">' . $host . '</a>');
 			
-			//create a link post and insert it
-			$postarr = array(
-				'post_type' => 'post',
-				'post_title' => $title,
-				'post_content' => $description,
-				'post_author' => $current_user->ID,
-				'post_status' => 'publish',
-				'meta_input' => array(
-					'l2p_url' => $url,
-				)
-			);
+			if($new_post==true){
+				//create a link post and insert it
+				$postarr = array(
+					'post_type' => 'post',
+					'post_title' => $title,
+					'post_content' => $description,
+					'post_author' => $current_user->ID,
+					'post_status' => 'publish',
+					'meta_input' => array(
+						'l2p_url' => $url,
+					)
+				);
 			
-			$post_id = wp_insert_post($postarr);
-			$post_url = get_permalink($post_id);
-			
-			echo '<hr />';
-			echo __('New Post:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';				
+				$post_id = wp_insert_post($postarr);
+				$post_url = get_permalink($post_id);
+				echo '<hr />';
+				echo __('New Post:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';	
+			}	
+			else{
+				//update existing post
+				$postarr = array(
+					'ID' => $old_post_id,
+					'post_type' => 'post',
+					'post_title' => $title,
+					'post_content' => $description,
+					'post_author' => $current_user->ID
+				);
+				wp_update_post($postarr);
+				echo '<hr />';
+				$post_url = get_permalink($old_post_id);
+				echo __('Updated post at ', 'link2post') . '<a href="' . $post_url . '">' . $post_url . '</a>.';
+			}		
 		}catch (Exception $e) {
 			echo 'Caught exception: ',  $e->getMessage(), "\n";
 		}
