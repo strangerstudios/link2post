@@ -69,18 +69,19 @@ function l2p_admin_bar_menu() {
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
 		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
-		
+	
+	//FOLLOW THIS FOR AJAX HELP: https://www.w3schools.com/xml/ajax_php.asp
 	$wp_admin_bar->add_menu( array(
 		'id' => 'l2p_input',
 		'parent' => 'link2post',
-		'title' => '<form><input type="text" style="height:22px;"> <input type="submit" style="height:30px;"></form>') );
+		'title' => '<form><input type="text" style="height:22px;"></form> <span id="l2p_response"></span>') );
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 
 /*
 	Process a Form Submission
 */
-function l2p_processURL($url = NULL) {
+function l2p_processURL($url = NULL, $force_update = false) {
 	global $current_user, $wpdb;
 	
 	if(empty($url) && !empty($_REQUEST['l2purl'])) {
@@ -137,7 +138,11 @@ function l2p_processURL($url = NULL) {
 			}
 			
 			//module can update
-			if(empty($_REQUEST['l2poverwrite'])) {
+			if($force_update==true){
+				call_user_func($arr['callback'], $url, $old_post_id);
+				return;
+			}
+			elseif(empty($_REQUEST['l2poverwrite'])) {
 				$post_url = get_permalink($old_post_id);		
 				echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.';
 				$current_url="http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
@@ -149,7 +154,7 @@ function l2p_processURL($url = NULL) {
 				return;
 			}
 			elseif($_REQUEST['l2poverwrite']=="false"){
-				echo("Post not updated.");
+				echo __("Post not updated.", 'link2post');
 				return;
 			}
     		return;
@@ -160,7 +165,10 @@ function l2p_processURL($url = NULL) {
 	
 	//if post already exists
 	if(!$new_post) {
-		if(empty($_REQUEST['l2poverwrite'])) {
+		if($force_update==true){
+			$update_post = true;
+		}
+		elseif(empty($_REQUEST['l2poverwrite'])) {
 			$post_url = get_permalink($old_post_id);		
 			echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.';
 			$current_url="http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
@@ -171,7 +179,7 @@ function l2p_processURL($url = NULL) {
 			$update_post = true;
 		}
 		elseif($_REQUEST['l2poverwrite']=="false"){
-			echo("Post not updated.");
+			echo __("Post not updated.", 'link2post');
 			return;
 		}
 	} 
@@ -188,7 +196,7 @@ function l2p_processURL($url = NULL) {
 			if(!empty($title) && !empty($title['text']))
 				$title = sanitize_text_field($title['text']);
 			else{
-				$title = "";
+				$title = "No title";
 			}
 			
 			//scrape the description

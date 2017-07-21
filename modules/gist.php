@@ -50,7 +50,7 @@ function l2p_gist_callback($url, $old_post_id=NULL){
 
 	//get author's username
 	$path_exploded = explode("/", parse_url($url, PHP_URL_PATH));
-	$author_username = $path_exploded[1];
+	$author_username = esc_html($path_exploded[1]);
 	//get author's GitHub profile
 	$github_profile_url = 'https://github.com/'.$author_username;
 
