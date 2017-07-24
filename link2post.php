@@ -69,12 +69,16 @@ function l2p_admin_bar_menu() {
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
 		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
-	
+
 	//FOLLOW THIS FOR AJAX HELP: https://www.w3schools.com/xml/ajax_php.asp
+	?>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script type="text/javascript" src="/TestWebsite/wp-content/plugins/link2post/js/link2post.js"></script>
+	<?php
 	$wp_admin_bar->add_menu( array(
 		'id' => 'l2p_input',
 		'parent' => 'link2post',
-		'title' => '<form><input type="text" style="height:22px;"></form> <span id="l2p_response"></span>') );
+		'title' => '<form><input type="text" id="l2p_URL_input" style="height:22px;"><button type="button" id="l2p_toolbar_submit" onclick="l2p_initial_submit()">Create Post</button></form><span id="l2p_response"></span>') );
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 
@@ -247,3 +251,13 @@ function l2p_processURL($url = NULL, $force_update = false) {
 		}
 	}		
 }
+
+function my_wp_head_ajax_url(){
+	?>
+	<script type="text/JavaScript">
+	var ajaxurl = '<?php echo admin_url("admin-ajax.php");?>'
+	</script>
+	<?php
+}
+add_action('wp_head', 'my_wp_head_ajax_url');
+?>
