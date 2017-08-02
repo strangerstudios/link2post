@@ -1,4 +1,29 @@
 <?php
+
+$path = $_SERVER['DOCUMENT_ROOT']."/TestWebsite";
+include_once $path . '/wp-config.php';
+include_once $path . '/wp-load.php';
+include_once $path . '/wp-includes/wp-db.php';
+include_once $path . '/wp-includes/pluggable.php';
+error_reporting(E_ERROR);
+
+if(!$_GET['l2pfunc']){ die("0");}
+elseif($_GET['l2pfunc']=="l2p_can_update"){
+	if(!$_GET['url']){ die("0");}
+	else{
+		l2p_can_update($_GET['url']);
+	}
+}
+elseif($_GET['l2pfunc']=="l2p_create_post"){
+	if(!$_GET['url']){ die("0");}
+	else{
+		l2p_create_post($_GET['url'], $_GET['old_post_id']);
+	}
+}
+elseif($_GET['l2pfunc']=="test"){
+echo "It's a good day. ";
+}
+
 /*
 //does post already exist?
 	//if not, create, return 1. Set status to 3
@@ -10,20 +35,25 @@ NEEDS TO RETURN OLD POST ID TOO IF NEEDS TO UPDATE
 */
 function l2p_can_update($url = NULL) {
 	global $current_user, $wpdb;
-	
 	//no URL, bail
 	if(empty($url))
 		return;	
-		
 	//check if we've already processed this URL
 	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
 	$old_post_id = $wpdb->get_var($sqlQuery);
 	
 	if(empty($old_post_id)){
-		l2p_create_post($url);
-		return 1;
+		//echo("making new post");
+		$objToReturn->new_post_created = true;
+		$objToReturn->new_post_url = l2p_create_post($url, NULL, true);
+		$JSONtoReturn = json_encode($objToReturn);
+		echo $JSONtoReturn;
+		return;
 	}	
-	
+	//echo("is old post");
+	$objToReturn->new_post_created = false;
+	$objToReturn->old_post_id = $old_post_id;
+	$objToReturn->old_post_url = get_permalink($old_post_id);
 	/**
 	 * Filter to add Link2Post modules. Modules are used to handle parsing
 	 * for URLs from specific sites.
@@ -33,26 +63,32 @@ function l2p_can_update($url = NULL) {
 	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
 	 */
 	$modules = apply_filters('l2p_modules', array());
-		
+	
 	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
+	$found_match = false;
 	foreach($modules as $module_host => $arr) {
     	if($host == $module_host){
+    		$found_match = true;
     		//we found one, use the module's parse function now
     		if(empty($arr['callback']) || empty($arr['can_update']) || $arr['can_update']==false){
     			//echo __("Broken callback function.", 'link2post');
-    			return -1;
+    			$objToReturn->can_update = false;
     		}
 			else{
-				return 2;
+				$objToReturn->can_update = true;
 			}
     	}
 	}
-	return 2;
+	if($found_match==false){
+		$objToReturn->can_update = true;
+	}
+	$JSONtoReturn = json_encode($objToReturn);
+	echo $JSONtoReturn;
 }
 
 
-function l2p_create_post($url, $old_post_id=NULL){
+function l2p_create_post($url, $old_post_id=NULL, $return_result=false){
 	global $current_user, $wpdb;
 	if(empty($url))
 		return;	
@@ -77,7 +113,7 @@ function l2p_create_post($url, $old_post_id=NULL){
     			return -1;
     		}
 			else{
-				call_user_func($arr['callback'], $url, $old_post_id);
+				call_user_func($arr['callback'], $url, $old_post_id, $return_result);
 				return;
 			}
     	}
@@ -121,8 +157,12 @@ function l2p_create_post($url, $old_post_id=NULL){
 		
 			$post_id = wp_insert_post($postarr);
 			$post_url = get_permalink($post_id);
-			echo '<hr />';
-			echo __('New Post:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';	
+			if($return_result==true){
+				return $post_url;
+			}
+			$objToReturn->url = $post_url;
+			$JSONtoReturn = json_encode($objToReturn);
+			echo $JSONtoReturn;
 		}	
 		else{
 			//update existing post
@@ -134,13 +174,12 @@ function l2p_create_post($url, $old_post_id=NULL){
 				'post_author' => $current_user->ID
 			);
 			wp_update_post($postarr);
-			echo '<hr />';
 			$post_url = get_permalink($old_post_id);
-			echo __('Updated post at ', 'link2post') . '<a href="' . $post_url . '">' . $post_url . '</a>.';
+			$objToReturn->url = $post_url;
+			$JSONtoReturn = json_encode($objToReturn);
+			echo $JSONtoReturn;
 		}		
-	}catch (Exception $e) {
-		echo 'Caught exception: ',  $e->getMessage(), "\n";
-	}
+	}catch (Exception $e) {}
 }		
 
 ?>  

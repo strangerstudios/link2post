@@ -1,7 +1,6 @@
 <?php 
 	//wrap this in some error handling to detect form submission with an empty or invalid URL
 	//use filter_var function to check URL http://php.net/manual/en/function.filter-var.php
-	l2p_processURL(); 
 	$l2p_js_url = plugin_dir_url( __FILE__ ) . "js/l2p_vue.js";
 ?>
 <div class="wrap">
@@ -17,6 +16,8 @@
     </div>
 </div>
 <script src="https://unpkg.com/vue@2.0.3/dist/vue.js"></script>
+<script src="https://unpkg.com/axios@0.12.0/dist/axios.min.js"></script>
+<script src="https://unpkg.com/lodash@4.13.1/lodash.min.js"></script>
 <script>
     var l2p_vue = new Vue({
       el: '#l2p_vue',
@@ -28,26 +29,47 @@
       	
         l2p_status: 0,
         l2p_url: '',
-        l2p_span_text: ''
+        l2p_span_text: '',
+        l2p_old_post_id: 0
       },
       methods:{
       	l2p_submit: function(){
       		//add more validation to url
       		if(this.l2p_url != ''){
-      			//php call 1
-      				//does post already exist?
-      					//if not, create, return 1. Set status to 3
-      					//if so, is the post able to be updated?
-      						//if not, return -1. set status to 0 with message in span
-      						//if so, return 2. set status to 2
+      			axios.get('http://localhost:8888/TestWebsite/wp-content/plugins/link2post/l2p_ajax_functions.php?l2pfunc=l2p_can_update&url='+this.l2p_url)
+                .then(function (response) {
+                	data = response.data
+					if(data.new_post_created == true){
+						l2p_vue.l2p_span_text = 'Your new post has been created at '+data.new_post_url
+						l2p_vue.l2p_status = 3
+					}
+					else if(data.can_update == false){
+						l2p_vue.l2p_span_text = 'An existing post has been found for this url at '+data.old_post_url+', but it is not able to be updated.'
+						l2p_vue.l2p_status = 3
+					}
+					else{
+						l2p_vue.l2p_span_text = 'An existing post has been found for this url at '+data.old_post_url+', update?'
+						l2p_vue.l2p_old_post_id = data.old_post_id
+						l2p_vue.l2p_status = 1
+					}
+                })
+                .catch(function (error) {
+                 console.log("got error "+error.data)
+                })
       		}
       	},
       	l2p_update: function(){
 			this.l2p_status = 2
 			this.l2p_span_text = "Updating..."
-			//php call 2, update post
-			this.l2p_span_text = "Your new post has been updated at (url)."
-			this.l2p_status = 3
+			axios.get('http://localhost:8888/TestWebsite/wp-content/plugins/link2post/l2p_ajax_functions.php?l2pfunc=l2p_create_post&url='+this.l2p_url+'&old_post_id='+this.l2p_old_post_id)
+                .then(function (response) {
+                	data = response.data
+					l2p_vue.l2p_span_text = 'Your new post has been updated at '+data.url+'.'
+					l2p_vue.l2p_status = 3
+                })
+                .catch(function (error) {
+					console.log("got error "+error.data)
+                })
       	},
       	l2p_reset: function(){
       		this.l2p_url = ''
