@@ -18,6 +18,7 @@ Text Domain: link2post
 /*
 	Load modules
 */
+
 define('L2P_DIR', dirname(__FILE__));
 if(get_option("l2p_gist_enabled")=="enabled"){
 	require_once(L2P_DIR . '/modules/gist.php');
@@ -50,7 +51,6 @@ function l2p_admin_settings_pages_main() {
 
 function l2p_admin_bar_menu() {
 	global $wp_admin_bar;
-	
 	if(!current_user_can('edit_posts'))
 		return;
 	
@@ -59,21 +59,29 @@ function l2p_admin_bar_menu() {
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
 		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
-	$wp_admin_bar->add_menu( array(
-		'id' => 'l2p_input',
-		'parent' => 'link2post',
-		'title' => '
-		<div id="l2p_vue">
-			<label for="l2purl" v-show="l2p_status==0">URL:</label>
-			<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url"/>
-			<span>{{l2p_span_text}}</span>
-			<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit"/>
-			<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update"/>
-			<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset"/>
-			<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" />
-    	</div>
-		'
+	$insert_admin_bar = true;
+	if(function_exists ( "get_current_screen" )){
+		if(get_current_screen()->base ==  "tools_page_link2post_tools"){
+			$insert_admin_bar = false;
+		}
+	} 
+	if($insert_admin_bar){
+		$wp_admin_bar->add_menu( array(
+			'id' => 'l2p_input',
+			'parent' => 'link2post',
+			'title' => '
+			<div id="l2p_vue">
+				<label for="l2purl" v-show="l2p_status==0">URL:</label>
+				<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url"/>
+				<span v-html="l2p_span_text"></span>
+				<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit"/>
+				<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update"/>
+				<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset"/>
+				<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" />
+			</div>
+			'
 		) );
+	}
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 
@@ -145,12 +153,11 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	}
 	if($old_post_id==NULL){
 		if(isset($_POST["l2p_old_post_id"]))
-			$url = $_POST["l2p_old_post_id"];
+			$old_post_id = $_POST["l2p_old_post_id"];
 	}
 	
 	if(empty($url))
 		return false;
-		
 	/**
 	 * Filter to add Link2Post modules. Modules are used to handle parsing
 	 * for URLs from specific sites.
@@ -166,12 +173,18 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	foreach($modules as $module_host => $arr) {
     	if($host == $module_host){
     		//we found one, use the module's parse function now
-    		if(empty($arr['callback']) || (!empty($old_post_id) && (empty($arr['can_update']) || $arr['can_update']==false))){
+    		if(empty($arr['callback'])){
 				//can't 
     			exit;
     		}
-			else{
+    		elseif($return_result){
+				return call_user_func($arr['callback'], $url, NULL, $return_result);
+    		}
+    		elseif(!empty($arr['can_update']) && $arr['can_update']==true){
 				call_user_func($arr['callback'], $url, $old_post_id, $return_result);
+				exit;
+			}
+			else{
 				exit;
 			}
     	}

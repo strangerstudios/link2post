@@ -88,6 +88,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 		$objToReturn->url = $post_url;
 		$JSONtoReturn = json_encode($objToReturn);
 		echo $JSONtoReturn;
+		exit;
 	}
 	else{
 		//update existing post
@@ -103,6 +104,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 		$objToReturn->url = $post_url;
 		$JSONtoReturn = json_encode($objToReturn);
 		echo $JSONtoReturn;
+		exit;
 	}
 	
 }
