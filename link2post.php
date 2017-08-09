@@ -59,18 +59,11 @@ function l2p_admin_bar_menu() {
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
 		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
-	$insert_admin_bar = true;
-	if(function_exists ( "get_current_screen" )){
-		if(get_current_screen()->base ==  "tools_page_link2post_tools"){
-			$insert_admin_bar = false;
-		}
-	} 
-	if($insert_admin_bar){
+	if(!l2p_on_tools_page()){
 		$wp_admin_bar->add_menu( array(
 			'id' => 'l2p_input',
-			'parent' => 'link2post',
 			'title' => '
-			<div id="l2p_vue">
+			<div id="l2p_vue" style="height:30px;">
 				<label for="l2purl" v-show="l2p_status==0">URL:</label>
 				<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url"/>
 				<span v-html="l2p_span_text"></span>
@@ -78,6 +71,7 @@ function l2p_admin_bar_menu() {
 				<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update"/>
 				<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset"/>
 				<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" />
+				<input type=hidden value="false" id=l2p_on_tools_page />
 			</div>
 			'
 		) );
@@ -85,7 +79,15 @@ function l2p_admin_bar_menu() {
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 
-
+function l2p_on_tools_page(){
+	$on_tools_page = false;
+	if(function_exists ( "get_current_screen" )){
+		if(get_current_screen()->base ==  "tools_page_link2post_tools"){
+			$on_tools_page = true;
+		}
+	} 
+	return $on_tools_page;
+}
 
 function l2p_submit() {
 	global $current_user, $wpdb;
@@ -95,6 +97,8 @@ function l2p_submit() {
 	if(empty($url))
 		exit;
 	$objToReturn = new stdClass();
+	$objToReturn->on_tools_page = l2p_on_tools_page();
+	
 	//check if we've already processed this URL
 	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
 	$old_post_id = $wpdb->get_var($sqlQuery);
