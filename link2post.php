@@ -24,10 +24,12 @@ if(get_option("l2p_gist_enabled")=="enabled"){
 	require_once(L2P_DIR . '/modules/gist.php');
 }
 function l2p_enqueue_scripts(){
-	wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js');
-	wp_enqueue_script('l2p_jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js', array(), null, true);
-	wp_enqueue_script("l2p_js_tools", plugins_url('link2post/js/link2post.js', L2P_DIR) , array("l2p_vue", "l2p_jquery"));
-	wp_localize_script( "l2p_js_tools", "ajax_target",  admin_url( 'admin-ajax.php' ));
+	if(current_user_can('administrator') ) {
+		wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js');
+		wp_enqueue_script('l2p_jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js', array(), null, true);
+		wp_enqueue_script("l2p_js_tools", plugins_url('link2post/js/link2post.js', L2P_DIR) , array("l2p_vue", "l2p_jquery"));
+		wp_localize_script( "l2p_js_tools", "ajax_target",  admin_url( 'admin-ajax.php' ));
+	}
 }
 add_action( 'wp_enqueue_scripts', 'l2p_enqueue_scripts');
 add_action( 'admin_enqueue_scripts', 'l2p_enqueue_scripts' );
