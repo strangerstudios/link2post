@@ -18,11 +18,19 @@ Text Domain: link2post
 /*
 	Load modules
 */
+
 define('L2P_DIR', dirname(__FILE__));
 if(get_option("l2p_gist_enabled")=="enabled"){
 	require_once(L2P_DIR . '/modules/gist.php');
 }
-//require_once(L2P_DIR . '/modules/youtube.php');
+function l2p_enqueue_scripts(){
+	wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js');
+	wp_enqueue_script('l2p_jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js', array(), null, true);
+	wp_enqueue_script("l2p_js_tools", plugins_url('link2post/js/link2post.js', L2P_DIR) , array("l2p_vue", "l2p_jquery"));
+	wp_localize_script( "l2p_js_tools", "ajax_target",  admin_url( 'admin-ajax.php' ));
+}
+add_action( 'wp_enqueue_scripts', 'l2p_enqueue_scripts');
+add_action( 'admin_enqueue_scripts', 'l2p_enqueue_scripts' );
 
 /*
 	Add Admin Page
@@ -41,26 +49,8 @@ function l2p_admin_settings_pages_main() {
 	require_once(dirname(__FILE__) . '/adminpages/link2post_settings.php');
 }
 
-
-/*
-	Add Form to Admin Bar
-	
-	add_action( 'admin_bar_menu', 'my_new_toolbar_item', 999 );
-
-	function my_new_toolbar_item( $wp_admin_bar ) {
-		$args = array(
-			'id'    => 'link2post_toolbar',
-			//'title' => 'Link2Post',
-			'title' => 'Link2Post: <form><input type="text" style="height:15px;"><input type="submit"></form>',
-			//'href'  => admin_url() . 'options-media.php',
-		);
-		$wp_admin_bar->add_node( $args );
-	}
-	
-*/
 function l2p_admin_bar_menu() {
 	global $wp_admin_bar;
-	
 	if(!current_user_can('edit_posts'))
 		return;
 	
@@ -69,43 +59,105 @@ function l2p_admin_bar_menu() {
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
 		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
-
-	//FOLLOW THIS FOR AJAX HELP: https://www.w3schools.com/xml/ajax_php.asp
-	?>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-	<script type="text/javascript" src="/TestWebsite/wp-content/plugins/link2post/js/link2post.js"></script>
-	<?php
-	$wp_admin_bar->add_menu( array(
-		'id' => 'l2p_input',
-		'parent' => 'link2post',
-		'title' => '<form><input type="text" id="l2p_URL_input" style="height:22px;"><button type="button" id="l2p_toolbar_submit" onclick="l2p_initial_submit()">Create Post</button></form><span id="l2p_response"></span>') );
+	$insert_admin_bar = true;
+	if(function_exists ( "get_current_screen" )){
+		if(get_current_screen()->base ==  "tools_page_link2post_tools"){
+			$insert_admin_bar = false;
+		}
+	} 
+	if($insert_admin_bar){
+		$wp_admin_bar->add_menu( array(
+			'id' => 'l2p_input',
+			'parent' => 'link2post',
+			'title' => '
+			<div id="l2p_vue">
+				<label for="l2purl" v-show="l2p_status==0">URL:</label>
+				<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url"/>
+				<span v-html="l2p_span_text"></span>
+				<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit"/>
+				<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update"/>
+				<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset"/>
+				<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" />
+			</div>
+			'
+		) );
+	}
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu');
 
-/*
-	Process a Form Submission
-*/
-function l2p_processURL($url = NULL, $force_update = false) {
+
+
+function l2p_submit() {
 	global $current_user, $wpdb;
-	
-	if(empty($url) && !empty($_REQUEST['l2purl'])) {
-		$url = esc_url_raw($_REQUEST['l2purl']);		
-	}
-	//echo($url);
-	
+	$url = $_POST["l2p_url"];
 	
 	//no URL, bail
 	if(empty($url))
-		return;	
-		
-	//check if we've already processed this URL			TODO: Should we update if it's already found?
+		exit;
+	$objToReturn = new stdClass();
+	//check if we've already processed this URL
 	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
 	$old_post_id = $wpdb->get_var($sqlQuery);
+	if(empty((int)$old_post_id)){
+		$objToReturn->new_post_created = true;
+		$objToReturn->new_post_url = l2p_update($url, NULL, true);
+		$JSONtoReturn = json_encode($objToReturn);
+		echo $JSONtoReturn;
+		exit;
+	}	
+	//echo("is old post");
+	$objToReturn->new_post_created = false;
+	$objToReturn->old_post_id = $old_post_id;
+	$objToReturn->old_post_url = get_permalink($old_post_id);
+	/**
+	 * Filter to add Link2Post modules. Modules are used to handle parsing
+	 * for URLs from specific sites.
+	 *
+	 * @since .1
+	 *
+	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
+	 */
+	$modules = apply_filters('l2p_modules', array());
 	
-	//if either of these are true, the page will be scraped
-	$new_post = empty($old_post_id);
-	$update_post = false;		
-		
+	//check the domain of the URL to see if it matches a module
+	$host = parse_url($url, PHP_URL_HOST);
+	$found_match = false;
+	foreach($modules as $module_host => $arr) {
+    	if($host == $module_host){
+    		$found_match = true;
+    		//we found one, use the module's parse function now
+    		if(empty($arr['callback']) || empty($arr['can_update']) || $arr['can_update']==false){
+    			//echo __("Broken callback function.", 'link2post');
+    			$objToReturn->can_update = false;
+    		}
+			else{
+				$objToReturn->can_update = true;
+			}
+    	}
+	}
+	if($found_match==false){
+		$objToReturn->can_update = true;
+	}
+	$JSONtoReturn = json_encode($objToReturn);
+	echo $JSONtoReturn;
+	exit;
+}
+add_action( 'wp_ajax_l2p_submit', 'l2p_submit' );
+
+
+function l2p_update($url='', $old_post_id=NULL, $return_result=false){
+	global $current_user, $wpdb;
+	if(empty($url)){
+		if(isset($_POST["l2p_url"]))
+			$url = $_POST["l2p_url"];
+	}
+	if($old_post_id==NULL){
+		if(isset($_POST["l2p_old_post_id"]))
+			$old_post_id = $_POST["l2p_old_post_id"];
+	}
+	
+	if(empty($url))
+		return false;
 	/**
 	 * Filter to add Link2Post modules. Modules are used to handle parsing
 	 * for URLs from specific sites.
@@ -121,143 +173,86 @@ function l2p_processURL($url = NULL, $force_update = false) {
 	foreach($modules as $module_host => $arr) {
     	if($host == $module_host){
     		//we found one, use the module's parse function now
-    		
     		if(empty($arr['callback'])){
-    			echo __("Broken callback function.", 'link2post');
-    			return;
+				//can't 
+    			exit;
     		}
-    	
-    		if($new_post==true){
-    			//new post, so not udating
-				call_user_func($arr['callback'], $url);
-				return;
+    		elseif($return_result){
+				return call_user_func($arr['callback'], $url, NULL, $return_result);
+    		}
+    		elseif(!empty($arr['can_update']) && $arr['can_update']==true){
+				call_user_func($arr['callback'], $url, $old_post_id, $return_result);
+				exit;
 			}
-			
-			//updating
-			$post_url = get_permalink($old_post_id);
-			if(empty($arr['can_update']) || $arr['can_update']==false){
-				//module can't update
-				echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.<br>' . __('The module for this post type is not capable of updating.', 'link2post');
-				return;
+			else{
+				exit;
 			}
-			
-			//module can update
-			if($force_update==true){
-				call_user_func($arr['callback'], $url, $old_post_id);
-				return;
-			}
-			elseif(empty($_REQUEST['l2poverwrite'])) {
-				$post_url = get_permalink($old_post_id);		
-				echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.';
-				$current_url="http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-				echo __('<br>Would you like to overwrite it? ').'<a href="'.$current_url.'&l2poverwrite=true">'.__('Yes   ').'</a><a href="'.$current_url.'&l2poverwrite=false">'.__('No').'</a>';
-				return;
-			}
-			elseif($_REQUEST['l2poverwrite']=="true"){
-				call_user_func($arr['callback'], $url, $old_post_id);
-				return;
-			}
-			elseif($_REQUEST['l2poverwrite']=="false"){
-				echo __("Post not updated.", 'link2post');
-				return;
-			}
-    		return;
     	}
 	}
-	
-	//no modules were found for this host, so we'll do the default behavior.
-	
-	//if post already exists
-	if(!$new_post) {
-		if($force_update==true){
-			$update_post = true;
+		
+	require_once(dirname(__FILE__).'/lib/selector.php');	
+	try{
+		$html = wp_remote_retrieve_body(wp_remote_get($url));
+		
+		//scrape the title
+		$title = l2p_SelectorDOM::select_element('title', $html);
+		if(!empty($title) && !empty($title['text']))
+			$title = sanitize_text_field($title['text']);
+		else{
+			$title = "No title";
 		}
-		elseif(empty($_REQUEST['l2poverwrite'])) {
-			$post_url = get_permalink($old_post_id);		
-			echo __('Found an existing post for that URL here:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>.';
-			$current_url="http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-			echo __('<br><br>Would you like to overwrite it? ').'<a href="'.$current_url.'&l2poverwrite=true">'.__('Yes   ').'</a><a href="'.$current_url.'&l2poverwrite=false">'.__('No').'</a>';
-			return;
+		
+		//scrape the description
+		$description = l2p_SelectorDOM::select_element('meta[name=description]', $html);
+		if(!empty($description) && !empty($description['attributes']) && !empty($description['attributes']['content']))
+			$description = sanitize_text_field($description['attributes']['content']);
+		else{
+			$description = "";
 		}
-		elseif($_REQUEST['l2poverwrite']=="true"){
-			$update_post = true;
-		}
-		elseif($_REQUEST['l2poverwrite']=="false"){
-			echo __("Post not updated.", 'link2post');
-			return;
-		}
-	} 
-	
-	//scraping
-	if($new_post==true || $update_post==true){
-		//load the URL and parse
-		require_once(dirname(__FILE__).'/lib/selector.php');	
-		try{
-			$html = wp_remote_retrieve_body(wp_remote_get($url));
-			
-			//scrape the title
-			$title = l2p_SelectorDOM::select_element('title', $html);
-			if(!empty($title) && !empty($title['text']))
-				$title = sanitize_text_field($title['text']);
-			else{
-				$title = "No title";
+		
+		//add link back to the URL to the description:
+		$description .= "\n\n" . sprintf(__('Originally posted at %s.', 'link2post'), '<a href="' . esc_url($url) . '">' . $host . '</a>');
+		
+		if(empty($old_post_id)){
+			//create a link post and insert it
+			$postarr = array(
+				'post_type' => 'post',
+				'post_title' => $title,
+				'post_content' => $description,
+				'post_author' => $current_user->ID,
+				'post_status' => 'publish',
+				'meta_input' => array(
+					'l2p_url' => $url,
+				)
+			);
+		
+			$post_id = wp_insert_post($postarr);
+			$post_url = get_permalink($post_id);
+			if($return_result==true){
+				return $post_url;
 			}
-			
-			//scrape the description
-			$description = l2p_SelectorDOM::select_element('meta[name=description]', $html);
-			if(!empty($description) && !empty($description['attributes']) && !empty($description['attributes']['content']))
-				$description = sanitize_text_field($description['attributes']['content']);
-			else{
-				$description = "";
-			}
-			
-			//add link back to the URL to the description:
-			$description .= "\n\n" . sprintf(__('Originally posted at %s.', 'link2post'), '<a href="' . esc_url($url) . '">' . $host . '</a>');
-			
-			if($new_post==true){
-				//create a link post and insert it
-				$postarr = array(
-					'post_type' => 'post',
-					'post_title' => $title,
-					'post_content' => $description,
-					'post_author' => $current_user->ID,
-					'post_status' => 'publish',
-					'meta_input' => array(
-						'l2p_url' => $url,
-					)
-				);
-			
-				$post_id = wp_insert_post($postarr);
-				$post_url = get_permalink($post_id);
-				echo '<hr />';
-				echo __('New Post:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';	
-			}	
-			else{
-				//update existing post
-				$postarr = array(
-					'ID' => $old_post_id,
-					'post_type' => 'post',
-					'post_title' => $title,
-					'post_content' => $description,
-					'post_author' => $current_user->ID
-				);
-				wp_update_post($postarr);
-				echo '<hr />';
-				$post_url = get_permalink($old_post_id);
-				echo __('Updated post at ', 'link2post') . '<a href="' . $post_url . '">' . $post_url . '</a>.';
-			}		
-		}catch (Exception $e) {
-			echo 'Caught exception: ',  $e->getMessage(), "\n";
-		}
-	}		
-}
-
-function my_wp_head_ajax_url(){
-	?>
-	<script type="text/JavaScript">
-	var ajaxurl = '<?php echo admin_url("admin-ajax.php");?>'
-	</script>
-	<?php
-}
-add_action('wp_head', 'my_wp_head_ajax_url');
+			$objToReturn->url = $post_url;
+			$JSONtoReturn = json_encode($objToReturn);
+			echo $JSONtoReturn;
+			exit;
+		}	
+		else{
+			//update existing post
+			$postarr = array(
+				'ID' => $old_post_id,
+				'post_type' => 'post',
+				'post_title' => $title,
+				'post_content' => $description,
+				'post_author' => $current_user->ID
+			);
+			wp_update_post($postarr);
+			$post_url = get_permalink($old_post_id);
+			$objToReturn->url = $post_url;
+			$JSONtoReturn = json_encode($objToReturn);
+			echo $JSONtoReturn;
+			exit;
+		}		
+	}catch (Exception $e) {}
+}		
+add_action( 'wp_ajax_l2p_update', 'l2p_update' );
 ?>

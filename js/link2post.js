@@ -1,78 +1,67 @@
-//Start basic
-function l2p_initial_submit() {
-	console.log("running");
-	console.log(jQuery('#l2p_URL_input'));
-	var url = jQuery('#l2p_URL_input').val()
-	console.log(url);
-	jQuery.ajax({
-	url: ajaxurl,type:'GET',timeout:5000,
-		dataType: 'html',
-		data: "action=echo_url&url="+url,
-		error: function(xml){
-			//timeout
-		},
-		success: function(response{
-			console.log("success");
-		})
+$( document ).ready(function() {
+	var l2p_vue = new Vue({
+	  el: '#l2p_vue',
+	  data: {
+		//0: No submission yet
+		//1: Submission, asking to update
+		//2: Updating
+		//3: Updated/Created
 	
-	})
-	
-	
-	});
-}
+		l2p_status: 0,
+		l2p_url: '',
+		l2p_span_text: '',
+		l2p_old_post_id: 0
+	  },
+	  methods:{
+		l2p_submit: function(){
+			//add more validation to url
+			if(this.l2p_url != ''){
+				jQuery.post(
+				 ajax_target, 
+				 {
+					'action': 'l2p_submit',
+					'l2p_url':  this.l2p_url
+				}, 
+				function(response){
+					response = JSON.parse(response)
+					if(response.new_post_created == true){
+						l2p_vue.l2p_span_text = 'Your new post has been created at <a href="'+response.new_post_url+'">'+response.new_post_url+'</a>.'
+						l2p_vue.l2p_status = 3
+					}
+					else if(response.can_update == false){
+						l2p_vue.l2p_span_text = 'An existing post has been found for this url at <a href="'+response.old_post_url+'">'+response.old_post_url+'</a>, but it is not able to be updated.'
+						l2p_vue.l2p_status = 3
+					}
+					else{
+						l2p_vue.l2p_span_text = 'An existing post has been found for this url at <a href="'+response.old_post_url+'">'+response.old_post_url+'</a>, update?'
+						l2p_vue.l2p_old_post_id = response.old_post_id
+						l2p_vue.l2p_status = 1
+					}
+				})
 
-
-
-/*
-// initial_submission()
-function l2p_initial_submit() {
-	//send xml request
-	console.log("running");
-	var url = document.getElementById("l2p_URL_input").value;
-	var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-    	console.log("running 1");
-    	if (this.readyState == 4 && this.status == 200) {
-    		console.log("running 2");
-            document.getElementById("l2p_response").innerHTML = this.responseText;
-            
-			//if post already exists
-			if(this.responseText != ""){
-				//set innerHTML of span to "would you like to update"
-				document.getElementByID("l2p_response").innerHTML = "Post exists at "+this.responseText+". Would you like to update?";
-				//lock text box
-				document.getElementByID("l2p_URL_input").hide();
-				//hide button
-				document.getElementByID("l2p_toolbar_submit").hide();
-			} else{
-	
-				//call l2p process url
-				document.getElementByID("l2p_response").innerHTML = "Creating Post";
-				//set innerHTML to link to new post
-		
 			}
+		},
+		l2p_update: function(){
+			this.l2p_status = 2
+			this.l2p_span_text = "Updating..."
+			jQuery.post(
+				 ajax_target, 
+				 {
+					'action': 'l2p_update',
+					'l2p_url':  l2p_vue.l2p_url,
+					'l2p_old_post_id': l2p_vue.l2p_old_post_id
+				}, 
+				function(response){
+					response = JSON.parse(response)
+					l2p_vue.l2p_span_text = 'Your new post has been updated at <a href="'+response.url+'">'+response.url+'</a>.'
+					l2p_vue.l2p_status = 3
+				})
+		},
+		l2p_reset: function(){
+			this.l2p_url = ''
+			this.l2p_span_text = ''
+			this.l2p_status = 0
 		}
-    };
-	xmlhttp.open("GET", "/TestWebsite/wp-content/plugins/link2post/includes/response.php?q=" + url, true);
-    xmlhttp.send();
-	
-}
-
-function l2p_update_submit(update){
-	//update is boolean
-	
-	//if update
-		//call l2p process url
-	
-		//set innerHTML to link to new post
-		
-		//not sure what happens if module can't update
-	
-	//else
-		//set innerHTML to nothing
-	
-	//unhide button
-	
-	//unlock text box
-}
-*/
+	  }
+	})
+});

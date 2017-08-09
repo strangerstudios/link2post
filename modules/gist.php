@@ -7,7 +7,7 @@ function l2p_add_gist_module($modules) {
 add_filter('l2p_modules', 'l2p_add_gist_module');
 
 //callback to process a URL that is from gist.github.com_address
-function l2p_gist_callback($url, $old_post_id=NULL){
+function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 	global $current_user;
 
 	//Set up selector
@@ -82,9 +82,13 @@ function l2p_gist_callback($url, $old_post_id=NULL){
 			);
 		$post_id = wp_insert_post($postarr);
 		$post_url = get_permalink($post_id);
-		
-		echo '<hr />';
-		echo __('New Gist Post:', 'link2post') . ' <a href="' . $post_url . '">' . $post_url . '</a>';
+		if($return_result==true){
+			return $post_url;
+		}
+		$objToReturn->url = $post_url;
+		$JSONtoReturn = json_encode($objToReturn);
+		echo $JSONtoReturn;
+		exit;
 	}
 	else{
 		//update existing post
@@ -96,9 +100,11 @@ function l2p_gist_callback($url, $old_post_id=NULL){
 			'post_author' => $current_user->ID
 		);
 		wp_update_post($postarr);
-		echo '<hr />';
 		$post_url = get_permalink($old_post_id);
-		echo __('Updated Gist at ', 'link2post') . '<a href="' . $post_url . '">' . $post_url . '</a>.';
+		$objToReturn->url = $post_url;
+		$JSONtoReturn = json_encode($objToReturn);
+		echo $JSONtoReturn;
+		exit;
 	}
 	
 }
