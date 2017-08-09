@@ -23,5 +23,6 @@
 		<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update"/>
 		<input type=button value="don't update" v-show="l2p_status==1" v-on:click="l2p_reset"/>
 		<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" />
+		<input type=hidden value="true" id=l2p_on_tools_page />
     </div>
 </div>

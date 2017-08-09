@@ -6,7 +6,7 @@ $( document ).ready(function() {
 		//1: Submission, asking to update
 		//2: Updating
 		//3: Updated/Created
-	
+		l2p_on_tools_page: $("#l2p_on_tools_page").val(),
 		l2p_status: 0,
 		l2p_url: '',
 		l2p_span_text: '',
@@ -25,15 +25,30 @@ $( document ).ready(function() {
 				function(response){
 					response = JSON.parse(response)
 					if(response.new_post_created == true){
-						l2p_vue.l2p_span_text = 'Your new post has been created at <a href="'+response.new_post_url+'">'+response.new_post_url+'</a>.'
+						if(l2p_vue.l2p_on_tools_page=="true"){
+							l2p_vue.l2p_span_text = 'Your new post has been created at <a href="'+response.new_post_url+'">'+response.new_post_url+'</a>.'
+						}
+						else{
+							l2p_vue.l2p_span_text = 'Post created <a href="'+response.new_post_url+'" style="display:inline-block">here</a>.'
+						}
 						l2p_vue.l2p_status = 3
 					}
 					else if(response.can_update == false){
-						l2p_vue.l2p_span_text = 'An existing post has been found for this url at <a href="'+response.old_post_url+'">'+response.old_post_url+'</a>, but it is not able to be updated.'
+						if(l2p_vue.l2p_on_tools_page=="true"){
+							l2p_vue.l2p_span_text = 'An existing post has been found for this url at <a href="'+response.old_post_url+'">'+response.old_post_url+'</a>, but it is not able to be updated.'
+						}
+						else{
+							l2p_vue.l2p_span_text = 'Existing post found <a href="'+response.old_post_url+'" style="display:inline-block">here</a>, but cannot be updated.'
+						}
 						l2p_vue.l2p_status = 3
 					}
 					else{
-						l2p_vue.l2p_span_text = 'An existing post has been found for this url at <a href="'+response.old_post_url+'">'+response.old_post_url+'</a>, update?'
+						if(l2p_vue.l2p_on_tools_page=="true"){
+							l2p_vue.l2p_span_text = 'An existing post has been found for this url at <a href="'+response.old_post_url+'">'+response.old_post_url+'</a>, update?'
+						}
+						else{
+							l2p_vue.l2p_span_text = 'Existing post found <a href="'+response.old_post_url+'" style="display:inline-block">here</a>, update?'
+						}
 						l2p_vue.l2p_old_post_id = response.old_post_id
 						l2p_vue.l2p_status = 1
 					}
@@ -53,7 +68,12 @@ $( document ).ready(function() {
 				}, 
 				function(response){
 					response = JSON.parse(response)
-					l2p_vue.l2p_span_text = 'Your new post has been updated at <a href="'+response.url+'">'+response.url+'</a>.'
+					if(l2p_vue.l2p_on_tools_page=="true"){
+						l2p_vue.l2p_span_text = 'Your post has been updated at <a href="'+response.url+'">'+response.url+'</a>.'
+					}
+					else{
+						l2p_vue.l2p_span_text = 'Post updated <a href="'+response.url+'" style="display:inline-block">here</a>.'
+					}					
 					l2p_vue.l2p_status = 3
 				})
 		},
