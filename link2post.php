@@ -64,20 +64,27 @@ function l2p_admin_bar_menu() {
 			'id' => 'l2p_input',
 			'title' => '
 			<div id="l2p_vue" style="height:30px;">
-				<label for="l2purl" v-show="l2p_status==0">URL:</label>
-				<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url"/>
-				<span v-html="l2p_span_text"></span>
-				<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit"/>
-				<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update"/>
-				<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset"/>
-				<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" />
+				<label for="l2purl" v-show="l2p_status==0">L2P URL:</label>
+				<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url" style="height:20px"/>
+				<span v-html="l2p_span_text" id=l2p_span></span>
+				<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit" style="height:30px"/>
+				<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update" style="height:30px"/>
+				<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset" style="height:30px"/>
+				<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" style="height:30px"/>
 				<input type=hidden value="false" id=l2p_on_tools_page />
 			</div>
 			'
 		) );
+		?>
+		<style>
+		#l2p_span>a{
+			color:#96e2ff;
+		}
+		</style>
+		<?php
 	}
 }
-add_action('admin_bar_menu', 'l2p_admin_bar_menu');
+add_action('admin_bar_menu', 'l2p_admin_bar_menu', 100000);
 
 function l2p_on_tools_page(){
 	$on_tools_page = false;
