@@ -22,6 +22,7 @@ Text Domain: link2post
 define('L2P_DIR', dirname(__FILE__));
 if(get_option("l2p_gist_enabled")=="enabled"){
 	require_once(L2P_DIR . '/modules/gist.php');
+	require_once(L2P_DIR . '/modules/youtube.php');
 }
 function l2p_enqueue_scripts(){
 	if(current_user_can('administrator') ) {
@@ -65,28 +66,44 @@ function l2p_admin_bar_menu() {
 		$wp_admin_bar->add_menu( array(
 			'id' => 'l2p_input',
 			'title' => '
-			<div id="l2p_vue" style="height:30px;">
-				<label for="l2purl" v-show="l2p_status==0">L2P URL:</label>
-				<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url" style="height:20px"/>
-				<span v-html="l2p_span_text" id=l2p_span></span>
-				<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit" style="height:30px"/>
-				<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update" style="height:30px"/>
-				<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset" style="height:30px"/>
-				<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" style="height:30px"/>
-				<input type=hidden value="false" id=l2p_on_tools_page />
+			<div id="l2p_vue" style="height:30px; ">
+				<label id="l2p_showAdminbar" for="l2p_showAdminbar" v-show="!l2p_showAdminbar">Show L2P:</label>
+				<input type=checkbox name="l2p_showAdminbar" v-model="l2p_showAdminbar">
+				<transition name="fade"><div v-show="l2p_showAdminbar" id="vue_holder">
+					<label id="l2p_url_label" for="l2purl" v-show="l2p_status==0"> URL:</label>
+					<input id="l2p_url_text" name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url" style="height:20px"/>
+					<span v-html="l2p_span_text" id=l2p_span></span>
+					<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit" style="height:30px"/>
+					<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update" style="height:30px"/>
+					<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset" style="height:30px"/>
+					<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" style="height:30px"/>
+					<input type=hidden value="false" id=l2p_on_tools_page />
+				</div></transition>
 			</div>
+			<style>
+				#l2p_span>a{
+					color:#96e2ff;
+				}
+				#vue_holder, #l2p_url_text {
+					display:inline-block;
+				}
+				#l2p_showAdminbar, #l2p_url_label {
+					display:inline-block;
+					color: #ffffff;
+				}
+				.fade-enter-active, .fade-leave-active {
+				  transition: opacity .5s;
+				}
+				.fade-enter, .fade-leave-to  {
+				  opacity: 0;
+				}
+			</style>
 			'
 		) );
-		?>
-		<style>
-		#l2p_span>a{
-			color:#96e2ff;
-		}
-		</style>
-		<?php
+
 	}
 }
-add_action('admin_bar_menu', 'l2p_admin_bar_menu', 100000);
+add_action('admin_bar_menu', 'l2p_admin_bar_menu', 1000);
 
 function l2p_on_tools_page(){
 	$on_tools_page = false;
@@ -184,7 +201,7 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
 	foreach($modules as $module_host => $arr) {
-    	if($host == $module_host){
+    	if(strpos($host, $module_host) !== false){
     		//we found one, use the module's parse function now
     		if(empty($arr['callback'])){
 				//can't 

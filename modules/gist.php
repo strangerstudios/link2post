@@ -57,16 +57,6 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 	//format post content
 	$break = " </br> ";
 	$post_content = $description.$break."\n".$embed_code."\n".$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
-	//get OG image, CAN'T GET THIS TO WORK
-	/*
-	$img_link = l2p_SelectorDOM::select_element('meta', $html);
-	var_dump($img_link);
-	if(!empty($img_link) && !empty($img_link['attributes']) && !empty($img_link['attributes']['content'])){
-		$img_link = sanitize_text_field($img_link['attributes']['content']);
-		echo("sanitized");
-	}
-	echo($img_link);
-	*/
 	
 	if(empty($old_post_id)){
 		//insert a Gist CPT

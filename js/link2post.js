@@ -10,7 +10,8 @@ $( document ).ready(function() {
 		l2p_status: 0,
 		l2p_url: '',
 		l2p_span_text: '',
-		l2p_old_post_id: 0
+		l2p_old_post_id: 0,
+		l2p_showAdminbar:false
 	  },
 	  methods:{
 		l2p_submit: function(){
