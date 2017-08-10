@@ -24,10 +24,7 @@ function l2p_codepen_callback($url, $old_post_id=NULL, $return_result=false){
 		else{
 			$description = "";
 		}
-		
-		
-		$url;
-	
+			
 		//get author name
 		$author_name = l2p_SelectorDOM::select_element('.pen-owner-link', $html);
 		if(!empty($author_name) && !empty($author_name['text']))

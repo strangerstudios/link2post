@@ -25,6 +25,7 @@ if(get_option("l2p_gist_enabled")=="enabled"){
 }
 require_once(L2P_DIR . '/modules/youtube.php');
 require_once(L2P_DIR . '/modules/codepen.php');
+require_once(L2P_DIR . '/modules/jsfiddle.php');
 function l2p_enqueue_scripts(){
 	if(current_user_can('administrator') ) {
 		wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js');
