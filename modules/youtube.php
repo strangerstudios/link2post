@@ -15,23 +15,27 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 		$title = l2p_SelectorDOM::select_element('title', $html);
 		if(!empty($title) && !empty($title['text']))
 					$title = sanitize_text_field($title['text']);
+		$objToReturn->title = $title;
 	
 		//grab description video description
 		$description = l2p_SelectorDOM::select_element('#eow-description', $html);
 		if(!empty($description) && !empty($description['text']))
-					$description = sanitize_text_field($title['text']);
-		//echo $description;
-		
+			$description = sanitize_text_field($description['text']);
+
 		//add embed code to post body
 		$embed_code = $url;
 	
 		//get channel name
-		$channel_name = l2p_SelectorDOM::select_element('.yt-user-info > .g-hovercard', $html);
+		$channel_name = l2p_SelectorDOM::select_element('.yt-user-info', $html);
 		if(!empty($channel_name) && !empty($channel_name['text']))
-					$channel_name = array_values(sanitize_text_field($title['text']));
+			$channel_name = sanitize_text_field($channel_name['text']);
+
 	
 		//get chanel url
-		$channel_url = 'https://youtube.com/'.$channel_name;
+		$channel_id = l2p_SelectorDOM::select_element('meta[itemprop=channelId]', $html);
+		if(!empty($channel_id) && !empty($channel_id["attributes"]['content']))
+			$channel_id = sanitize_text_field($channel_id["attributes"]['content']);
+		$channel_url = 'https://youtube.com/channel/'.$channel_id;
 
 		//format post content
 		$break = " </br> ";
@@ -77,9 +81,6 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 		exit;
 	}
 }
-
-
-//do we need embed code?
 
 //add a YouTube CPT
 function create_youtube_cpt() {  
