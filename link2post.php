@@ -20,12 +20,13 @@ Text Domain: link2post
 */
 
 define('L2P_DIR', dirname(__FILE__));
-if(get_option("l2p_gist_enabled")=="enabled"){
-	require_once(L2P_DIR . '/modules/gist.php');
+foreach (scandir(L2P_DIR.'/modules') as $filename) {
+    $path = dirname(__FILE__) . '/modules/' . $filename;
+    if (is_file($path) && '.php'==substr($path, -4)) {
+        require_once($path);
+    }
 }
-require_once(L2P_DIR . '/modules/youtube.php');
-require_once(L2P_DIR . '/modules/codepen.php');
-require_once(L2P_DIR . '/modules/jsfiddle.php');
+
 function l2p_enqueue_scripts(){
 	if(current_user_can('administrator') ) {
 		wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js');
@@ -70,7 +71,7 @@ function l2p_admin_bar_menu() {
 			'title' => '
 			<div id="l2p_vue" style="height:30px; ">
 				<label id="l2p_showAdminbar" for="l2p_showAdminbar" v-show="!l2p_showAdminbar">Show L2P:</label>
-				<input type=checkbox name="l2p_showAdminbar" v-model="l2p_showAdminbar">
+				<input id="l2p_checkbox" type=checkbox name="l2p_showAdminbar" v-model="l2p_showAdminbar">
 				<transition name="fade"><div v-show="l2p_showAdminbar" id="vue_holder">
 					<label id="l2p_url_label" for="l2purl" v-show="l2p_status==0"> URL:</label>
 					<input id="l2p_url_text" name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url" style="height:20px"/>
@@ -83,6 +84,10 @@ function l2p_admin_bar_menu() {
 				</div></transition>
 			</div>
 			<style>
+				#l2p_checkbox{
+					height:16px;
+					width:16px;
+				}
 				#l2p_span>a{
 					color:#96e2ff;
 				}
