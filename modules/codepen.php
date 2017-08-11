@@ -87,7 +87,7 @@ function l2p_codepen_callback($url, $old_post_id=NULL, $return_result=false){
 }
 
 //add a Codepen CPT
-function create_codepen_cpt() {  
+function l2p_create_codepen_cpt() {  
   register_post_type( 'codepen',
     array(
       'labels' => array(
@@ -107,7 +107,6 @@ function create_codepen_cpt() {
     )
   );
 }
-add_action( 'init', 'create_codepen_cpt' );
 
 //handle search and archives
 

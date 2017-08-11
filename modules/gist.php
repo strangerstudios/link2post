@@ -102,27 +102,26 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 //do we need embed code?
 
 //add a GitHub Gist CPT
-function create_gist_cpt() {  
-  register_post_type( 'gist',
-    array(
-      'labels' => array(
-        'name' => __( 'Gists' ),
-        'singular_name' => __( 'Gist' ),
-        'add_new_item' => __('Add New Gist'),
-        'edit_item' => __( 'Edit Gist' ),
-        'new_item' => __( 'New Gist' ),
+function l2p_create_gist_cpt() {  
+	//add check to make sure we should make cpt
+	register_post_type( 'gist',array(
+		'labels' => array(
+		'name' => __( 'Gists' ),
+		'singular_name' => __( 'Gist' ),
+		'add_new_item' => __('Add New Gist'),
+		'edit_item' => __( 'Edit Gist' ),
+		'new_item' => __( 'New Gist' ),
 		'view_item' => __( 'View Gist' ),
 		'search_items' => __( 'Search Gists' ),
 		'not_found' => __( 'No Gists Found' ),
 		'not_found_in_trash' => __( 'No Gists Found In Trash' ),
 		'all_items' => __( 'All Gists' ),
-      ),
-      'public' => true,
-      'has_archive' => true,
-    )
-  );
+		),
+		'public' => true,
+		'has_archive' => true,
+	)
+	);
 }
-add_action( 'init', 'create_gist_cpt' );
 
 //handle search and archives
 

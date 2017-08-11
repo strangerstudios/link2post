@@ -80,7 +80,7 @@ function l2p_jsfiddle_callback($url, $old_post_id=NULL, $return_result=false){
 }
 
 //add a Codepen CPT
-function create_jsfiddle_cpt() {  
+function l2p_create_jsfiddle_cpt() {  
   register_post_type( 'jsfiddle',
     array(
       'labels' => array(
@@ -100,7 +100,6 @@ function create_jsfiddle_cpt() {
     )
   );
 }
-add_action( 'init', 'create_jsfiddle_cpt' );
 
 //handle search and archives
 

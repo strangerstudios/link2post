@@ -23,7 +23,14 @@ define('L2P_DIR', dirname(__FILE__));
 foreach (scandir(L2P_DIR.'/modules') as $filename) {
     $path = dirname(__FILE__) . '/modules/' . $filename;
     if (is_file($path) && '.php'==substr($path, -4)) {
-        require_once($path);
+    	$module_name = substr($filename, 0, -4);
+        //if enabled, requre. else continue
+        if(get_option("l2p_".$module_name."_content_enabled")=="enabled"){
+       		require_once($path);
+       		if(get_option("l2p_".$module_name."_cpt_enabled")=="enabled"){
+        		add_action( 'init', 'l2p_create_'.$module_name.'_cpt' );
+        	}
+        }
     }
 }
 

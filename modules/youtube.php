@@ -83,7 +83,7 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 }
 
 //add a YouTube CPT
-function create_youtube_cpt() {  
+function l2p_create_youtube_cpt() {  
   register_post_type( 'youtube',
     array(
       'labels' => array(
@@ -103,7 +103,6 @@ function create_youtube_cpt() {
     )
   );
 }
-add_action( 'init', 'create_youtube_cpt' );
 
 //handle search and archives
 
