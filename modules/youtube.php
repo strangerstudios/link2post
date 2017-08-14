@@ -40,12 +40,12 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 		//format post content
 		$break = " </br> ";
 		$post_content = $description.$break."\n".$embed_code."\n".$break.'This video was made by <a href="'.$channel_url.'">'.$channel_name.'</a>.'.$break.'Original Video: <a href="'.$url.'">'.$url.'</a>';
-		//echo $post_content;
+		$post_type = (post_type_exists( "youtube" ) ? 'youtube' : 'post');
 
 		if(empty($old_post_id)){
 		//insert a Youtube CPT
 		$postarr = array(
-				'post_type' => 'youtube',
+				'post_type' => $post_type,
 				'post_title' => $title,
 				'post_content' => $post_content,
 				'post_author' => $current_user->ID,
@@ -68,7 +68,7 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 		//update existing post
 		$postarr = array(
 			'ID' => $old_post_id,
-			'post_type' => 'youtube',
+			'post_type' => $post_type,
 			'post_title' => $title,
 			'post_content' => $post_content,
 			'post_author' => $current_user->ID

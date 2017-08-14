@@ -17,6 +17,7 @@
 				update_option('l2p_'.$module_name.'_content_enabled', 'disabled');
 			}
 		}
+		echo "<meta http-equiv='refresh' content='0'>";
 	}
 ?>
 <div class="wrap">

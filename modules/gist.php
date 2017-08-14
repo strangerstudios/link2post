@@ -57,11 +57,12 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 	//format post content
 	$break = " </br> ";
 	$post_content = $description.$break."\n".$embed_code."\n".$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
-	
+	$post_type = (post_type_exists( "gist" ) ? 'gist' : 'post');
+		
 	if(empty($old_post_id)){
 		//insert a Gist CPT
 		$postarr = array(
-				'post_type' => 'gist',
+				'post_type' => $post_type,
 				'post_title' => $title,
 				'post_content' => $post_content,
 				'post_author' => $current_user->ID,
@@ -84,7 +85,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 		//update existing post
 		$postarr = array(
 			'ID' => $old_post_id,
-			'post_type' => 'gist',
+			'post_type' => $post_type,
 			'post_title' => $title,
 			'post_content' => $post_content,
 			'post_author' => $current_user->ID

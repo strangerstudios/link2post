@@ -37,12 +37,12 @@ function l2p_jsfiddle_callback($url, $old_post_id=NULL, $return_result=false){
 	//format post content
 	$break = " </br> ";
 	$post_content = $description.$break."\n".$embed_code."\n".$break.'This fiddle was made by <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.'Original Fiddle: <a href="'.$url.'">'.$url.'</a>';
-	//echo $post_content;
+	$post_type = (post_type_exists( "jsfiddle" ) ? 'jsfiddle' : 'post');
 
 	if(empty($old_post_id)){
 		//insert a jsfiddle CPT
 		$postarr = array(
-				'post_type' => 'jsfiddle',
+				'post_type' => $post_type,
 				'post_title' => $title,
 				'post_content' => $post_content,
 				'post_author' => $current_user->ID,
@@ -65,7 +65,7 @@ function l2p_jsfiddle_callback($url, $old_post_id=NULL, $return_result=false){
 		//update existing post
 		$postarr = array(
 			'ID' => $old_post_id,
-			'post_type' => 'jsfiddle',
+			'post_type' => $post_type,
 			'post_title' => $title,
 			'post_content' => $post_content,
 			'post_author' => $current_user->ID
