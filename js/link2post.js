@@ -1,4 +1,4 @@
-$( document ).ready(function() {
+jQuery( document ).ready(function() {
 	var l2p_vue = new Vue({
 	  el: '#l2p_vue',
 	  data: {
@@ -6,7 +6,7 @@ $( document ).ready(function() {
 		//1: Submission, asking to update
 		//2: Updating
 		//3: Updated/Created
-		l2p_on_tools_page: $("#l2p_on_tools_page").val(),
+		l2p_on_tools_page: jQuery("#l2p_on_tools_page").val(),
 		l2p_status: 0,
 		l2p_url: '',
 		l2p_span_text: '',
