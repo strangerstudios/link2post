@@ -1,113 +1,128 @@
 <?php
 //filter ___ to add gist module to link2post
 function l2p_add_gist_module($modules) {
-    $modules["gist.github.com"] = 'l2p_gist_callback';
+    $modules["gist.github.com"] = array('callback'=>'l2p_gist_callback', 'can_update'=>true);
     return $modules;
 }
 add_filter('l2p_modules', 'l2p_add_gist_module');
 
 //callback to process a URL that is from gist.github.com_address
-function l2p_gist_callback($url){
-	//check if we've already processed this URL
-	echo("CALLED BACK TO GIST FOR ".$url);
+function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
+	global $current_user;
 
-	//Set up hQuery
-	require_once(dirname(__FILE__).'/../lib/hQuery/hquery.php');
-	duzun\hQuery::$cache_path = dirname(__FILE__).'/../lib/hQuery/cache/';
-	$gist_page = hQuery::fromUrl($url);
+	//Set up selector
+	require_once(L2P_DIR.'/lib/selector.php');
+	$html = wp_remote_retrieve_body(wp_remote_get($url));
 
 	//grab title from title element
-	echo("</br>");
-	$title = $gist_page->find('.gist-header-title > a'); //specific to github, but title tag doesnt point to title doesnt give correct value
-	echo($title);
-
-	//grab description from meta element
-	echo("</br>");
-	$description = $gist_page->find('.repository-meta-content');
-	echo($description);
-
-	//try to figure out author (we need to figure out how to cross reference github usernames with WP users)
-	//find author's username
-	$path_exploded = explode("/", parse_url($url, PHP_URL_PATH));
-	$author_username = $path_exploded[1];
-	echo("</br>");
-	echo($author_username);
-
-	//find author's email
-	$github_accnt_url = 'https://github.com/'.$author_username;
-	$github_accnt_page = hQuery::fromUrl($github_accnt_url);
-	//$author_email = $github_accnt_page->find('u-email'); 
-	//can't get email if user is not logged in
-	//https://www.eremedia.com/sourcecon/how-to-find-almost-any-github-users-email-address/
-	
-	//grab the gist ID
-	$gist_ID = $path_exploded[2];
-	echo("</br>");
-	echo($gist_ID);
-
-	//maybe store the code in a field we can search on later
-	$github_raw_code_url = $url.'/raw';
-	$github_raw_code_page = hQuery::fromUrl($github_raw_code_url);
-	echo("</br>");
-	echo(htmlspecialchars($github_raw_code_page)); 
-	
-	
-	//grab code and maybe pull description from first comment
-	//Single-line Comments
-	$single_comments = $gist_page->find('.pl-c');
-	echo("</br>");
-	echo($single_comments);
-	
-	//Multiline Comments
-	//referencing http://www.justin-cook.com/2006/03/31/php-parse-a-string-between-two-strings/
-	$code = " ".htmlspecialchars($github_raw_code_page);
+	$title = l2p_SelectorDOM::select_element('.repository-meta-content', $html);
+	if(!empty($title) && !empty($title['text']))
+				$title = sanitize_text_field($title['text']);
+	else{
+		$title="Title is empty";
+	}
+	//grab description from multiline comment
+	$raw_code_url = $url.'/raw';
+	$raw_code_page = wp_remote_retrieve_body(wp_remote_get($raw_code_url));
+	$code = " ".htmlspecialchars($raw_code_page); 
 	$start = '/*';
 	$end = '*/';
 	$ini = strpos($code,$start);
 	if ($ini == 0){
-		$multiline_comment = "";
+		$description = "";
 	}
 	else{
-		$ini += strlen($start);   
-		$len = strpos($code,$end,$ini) - $ini;
-		$multiline_comment = substr($code,$ini,$len);
+		$before_description = substr($code, 0, $ini);
+		$trimmed = trim($before_description);
+		if($trimmed == '' or $trimmed == htmlspecialchars('<?php')){
+			$ini += strlen($start);   
+			$len = strpos($code,$end,$ini) - $ini;
+			$description = substr($code,$ini,$len);
+			$description = trim(str_replace ( " *" , "" , $description));
+			$description = trim(str_replace ( "*" , "" , $description));
+		}
+		else{
+			$description = "";
+		}
 	}
-	echo("</br>");
-	echo($multiline_comment);
-
-
 	//add embed code to post body
-	$embed_code = '<script src="'.$url.'.js"></script>';
-	echo("</br>");
-	echo(htmlspecialchars($embed_code));
+	$embed_code = $url;
 
-	//insert a Gist CPT
+	//get author's username
+	$path_exploded = explode("/", parse_url($url, PHP_URL_PATH));
+	$author_username = esc_html($path_exploded[1]);
+	//get author's GitHub profile
+	$github_profile_url = 'https://github.com/'.$author_username;
+
+	//format post content
+	$break = " </br> ";
+	$post_content = $description.$break."\n".$embed_code."\n".$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
+	$post_type = (post_type_exists( "gist" ) ? 'gist' : 'post');
+		
+	if(empty($old_post_id)){
+		//insert a Gist CPT
+		$postarr = array(
+				'post_type' => $post_type,
+				'post_title' => $title,
+				'post_content' => $post_content,
+				'post_author' => $current_user->ID,
+				'post_status' => 'publish',
+				'meta_input' => array(
+					'l2p_url' => $url,
+				)
+			);
+		$post_id = wp_insert_post($postarr);
+		$post_url = get_permalink($post_id);
+		if($return_result==true){
+			return $post_url;
+		}
+		$objToReturn->url = $post_url;
+		$JSONtoReturn = json_encode($objToReturn);
+		echo $JSONtoReturn;
+		exit;
+	}
+	else{
+		//update existing post
+		$postarr = array(
+			'ID' => $old_post_id,
+			'post_type' => $post_type,
+			'post_title' => $title,
+			'post_content' => $post_content,
+			'post_author' => $current_user->ID
+		);
+		wp_update_post($postarr);
+		$post_url = get_permalink($old_post_id);
+		$objToReturn->url = $post_url;
+		$JSONtoReturn = json_encode($objToReturn);
+		echo $JSONtoReturn;
+		exit;
+	}
+	
 }
 
 //do we need embed code?
 
 //add a GitHub Gist CPT
-function create_gist_cpt() {  
-  register_post_type( 'gist',
-    array(
-      'labels' => array(
-        'name' => __( 'Gists' ),
-        'singular_name' => __( 'Gist' ),
-        'add_new_item' => __('Add New Gist'),
-        'edit_item' => __( 'Edit Gist' ),
-        'new_item' => __( 'New Gist' ),
+function l2p_create_gist_cpt() {  
+	//add check to make sure we should make cpt
+	register_post_type( 'gist',array(
+		'labels' => array(
+		'name' => __( 'Gists' ),
+		'singular_name' => __( 'Gist' ),
+		'add_new_item' => __('Add New Gist'),
+		'edit_item' => __( 'Edit Gist' ),
+		'new_item' => __( 'New Gist' ),
 		'view_item' => __( 'View Gist' ),
 		'search_items' => __( 'Search Gists' ),
 		'not_found' => __( 'No Gists Found' ),
 		'not_found_in_trash' => __( 'No Gists Found In Trash' ),
 		'all_items' => __( 'All Gists' ),
-      ),
-      'public' => true,
-      'has_archive' => true,
-    )
-  );
+		),
+		'public' => true,
+		'has_archive' => true,
+	)
+	);
 }
-add_action( 'init', 'create_gist_cpt' );
 
 //handle search and archives
 
