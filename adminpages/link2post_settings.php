@@ -1,7 +1,7 @@
 <?php 
 	// Get/Update Settings
 	$modules = l2p_get_modules();
-	if(!empty($_REQUEST['l2p_save']))
+	if(!empty($_POST['l2p_save']))
 	{
 		foreach($modules as $key => $value){
 			if($_POST['l2p_'.$value['quick_name'].'_content_enabled']=='enabled'){
@@ -12,12 +12,13 @@
 				update_option('l2p_'.$value['quick_name'].'_cpt_enabled', 'disabled');
 			}
 		}
-		add_action('init','l2p_flush', 1000);
 		echo "<meta http-equiv='refresh' content='0'>";
 	}
+	add_action('shutdown','l2p_flush');
 	function l2p_flush(){
 		flush_rewrite_rules(true);
 	}
+
 ?>
 <div class="wrap">
 	<h2>Link2Post</h2>

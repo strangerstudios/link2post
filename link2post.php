@@ -27,6 +27,7 @@ require_once(L2P_DIR . '/modules/jsfiddle.php');
 
 $modules = l2p_get_modules();
 
+
 foreach($modules as $key => $value){
 /*
 	$key is name of the file(ie. 'gist.php')
@@ -36,6 +37,24 @@ foreach($modules as $key => $value){
 		add_action('init',$value['create_cpt']);
 	}
 }
+
+function myplugin_activate() {
+	$modules = l2p_get_modules();
+	foreach($modules as $key => $value){
+		if(!get_option("l2p_".$value['quick_name']."_content_enabled")){
+			update_option("l2p_".$value['quick_name']."_content_enabled", 'enabled');
+			call_user_func($value['create_cpt']);
+		}
+		elseif(get_option("l2p_".$value['quick_name']."_content_enabled")=='enabled'){
+			call_user_func($value['create_cpt']);
+		}
+		if(!get_option("l2p_".$value['quick_name']."_cpt_enabled")){
+			update_option("l2p_".$value['quick_name']."_cpt_enabled", 'disabled');
+		}
+	}
+	flush_rewrite_rules(true);
+}
+register_activation_hook( __FILE__, 'myplugin_activate' );
 
 function l2p_get_modules(){
 	/**
