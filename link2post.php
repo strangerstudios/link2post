@@ -20,18 +20,34 @@ define('L2P_VERSION', '.1');
 	Load modules
 */
 define('L2P_DIR', dirname(__FILE__));
-foreach (scandir(L2P_DIR.'/modules') as $filename) {
-    $path = dirname(__FILE__) . '/modules/' . $filename;
-    if (is_file($path) && '.php'==substr($path, -4)) {
-    	$module_name = substr($filename, 0, -4);
-        //if enabled, requre. else continue
-        if(get_option("l2p_".$module_name."_content_enabled")=="enabled"){
-       		require_once($path);
-       		if(get_option("l2p_".$module_name."_cpt_enabled")=="enabled"){
-        		add_action( 'init', 'l2p_create_'.$module_name.'_cpt' );
-        	}
-        }
-    }
+require_once(L2P_DIR . '/modules/youtube.php');
+require_once(L2P_DIR . '/modules/gist.php');
+require_once(L2P_DIR . '/modules/codepen.php');
+require_once(L2P_DIR . '/modules/jsfiddle.php');
+
+$modules = l2p_get_modules();
+
+foreach($modules as $key => $value){
+/*
+	$key is name of the file(ie. 'gist.php')
+	$value is associative array containing info on module
+*/
+	if(get_option("l2p_".$value['quick_name']."_cpt_enabled")=="enabled"){
+		add_action('init',$value['create_cpt']);
+	}
+}
+
+function l2p_get_modules(){
+	/**
+	 * Filter to add Link2Post modules. Modules are used to handle parsing
+	 * for URLs from specific sites.
+	 *
+	 * @since .1
+	 *
+	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
+	 */
+	$modules = apply_filters('l2p_modules', array());
+	return $modules;
 }
 
 function l2p_enqueue_scripts(){
@@ -141,7 +157,7 @@ function l2p_submit() {
 	//check if we've already processed this URL
 	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
 	$old_post_id = $wpdb->get_var($sqlQuery);
-	if(empty((int)$old_post_id)){
+	if(empty((int)$old_post_id) || get_post_status((int)$old_post_id)!='publish'){
 		$objToReturn->new_post_created = true;
 		$objToReturn->new_post_url = l2p_update($url, NULL, true);
 		$JSONtoReturn = json_encode($objToReturn);
@@ -152,24 +168,17 @@ function l2p_submit() {
 	$objToReturn->new_post_created = false;
 	$objToReturn->old_post_id = $old_post_id;
 	$objToReturn->old_post_url = get_permalink($old_post_id);
-	/**
-	 * Filter to add Link2Post modules. Modules are used to handle parsing
-	 * for URLs from specific sites.
-	 *
-	 * @since .1
-	 *
-	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
-	 */
-	$modules = apply_filters('l2p_modules', array());
+
+	$modules = l2p_get_modules();
 	
 	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
 	$found_match = false;
-	foreach($modules as $module_host => $arr) {
-    	if($host == $module_host){
+	foreach($modules as $key => $value) {
+    	if($host == $value['host'] && get_option("l2p_".$value['quick_name']."_content_enabled")=="enabled"){
     		$found_match = true;
     		//we found one, use the module's parse function now
-    		if(empty($arr['callback']) || empty($arr['can_update']) || $arr['can_update']==false){
+    		if(empty($value['callback']) || empty($value['can_update']) || $value['can_update']==false){
     			//echo __("Broken callback function.", 'link2post');
     			$objToReturn->can_update = false;
     		}
@@ -201,30 +210,23 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	
 	if(empty($url))
 		return false;
-	/**
-	 * Filter to add Link2Post modules. Modules are used to handle parsing
-	 * for URLs from specific sites.
-	 *
-	 * @since .1
-	 *
-	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
-	 */
-	$modules = apply_filters('l2p_modules', array());
+		
+	$modules = l2p_get_modules();
 		
 	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
-	foreach($modules as $module_host => $arr) {
-    	if(strpos($host, $module_host) !== false){
+	foreach($modules as $key => $value) {
+    	if(strpos($host, $value['host']) !== false && get_option("l2p_".$value['quick_name']."_content_enabled")=="enabled"){
     		//we found one, use the module's parse function now
-    		if(empty($arr['callback'])){
+    		if(empty($value['callback'])){
 				//can't 
     			exit;
     		}
     		elseif($return_result){
-				return call_user_func($arr['callback'], $url, NULL, $return_result);
+				return call_user_func($value['callback'], $url, NULL, $return_result);
     		}
-    		elseif(!empty($arr['can_update']) && $arr['can_update']==true){
-				call_user_func($arr['callback'], $url, $old_post_id, $return_result);
+    		elseif(!empty($value['can_update']) && $value['can_update']==true){
+				call_user_func($value['callback'], $url, $old_post_id, $return_result);
 				exit;
 			}
 			else{

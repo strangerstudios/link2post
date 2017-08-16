@@ -1,6 +1,6 @@
 <?php
 function l2p_add_codepen_module($modules) {
-    $modules["codepen.io"] = array('callback'=>'l2p_codepen_callback', 'can_update'=>true);
+    $modules["codepen.php"] = array('host'=>'codepen.io','callback'=>'l2p_codepen_callback', 'create_cpt'=>'l2p_create_codepen_cpt', 'quick_name'=>'codepen', 'can_update'=>true);
     return $modules;
 }
 add_filter('l2p_modules', 'l2p_add_codepen_module');

@@ -1,6 +1,6 @@
 <?php
 function l2p_add_jsfiddle_module($modules) {
-    $modules["jsfiddle.net"] = array('callback'=>'l2p_jsfiddle_callback', 'can_update'=>true);
+    $modules["jsfiddle.php"] = array('host'=>'jsfiddle.net','callback'=>'l2p_jsfiddle_callback', 'create_cpt'=>'l2p_create_jsfiddle_cpt', 'quick_name'=>'jsfiddle','can_update'=>true);
     return $modules;
 }
 add_filter('l2p_modules', 'l2p_add_jsfiddle_module');

@@ -1,6 +1,6 @@
 <?php
 function l2p_add_youtube_module($modules) {
-    $modules["youtube.com"] = array('callback'=>'l2p_youtube_callback', 'can_update'=>true);
+    $modules["youtube.php"] = array('host'=>'youtube.com','callback'=>'l2p_youtube_callback', 'create_cpt'=>'l2p_create_youtube_cpt', 'quick_name'=>'youtube','can_update'=>true);
     return $modules;
 }
 add_filter('l2p_modules', 'l2p_add_youtube_module');

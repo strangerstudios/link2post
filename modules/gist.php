@@ -1,7 +1,7 @@
 <?php
 //filter ___ to add gist module to link2post
 function l2p_add_gist_module($modules) {
-    $modules["gist.github.com"] = array('callback'=>'l2p_gist_callback', 'can_update'=>true);
+    $modules["gist.php"] = array('host'=>'gist.github.com','callback'=>'l2p_gist_callback', 'create_cpt'=>'l2p_create_gist_cpt', 'quick_name'=>'gist','can_update'=>true);
     return $modules;
 }
 add_filter('l2p_modules', 'l2p_add_gist_module');
