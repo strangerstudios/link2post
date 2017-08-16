@@ -9,11 +9,6 @@ Author URI: http://www.strangerstudios.com
 Text Domain: link2post
 */
 
-/*
-	Notes
-	
-	* Do we want to load a library for scraping HTML? https://github.com/duzun/hQuery.php
-*/
 define('L2P_VERSION', '.1');
 
 /*
@@ -111,9 +106,9 @@ function l2p_admin_bar_menu() {
 			'id' => 'l2p_input',
 			'title' => '
 			<div id="l2p_vue" style="height:30px; ">
-				<label id="l2p_showAdminbar" for="l2p_showAdminbar" v-show="!l2p_showAdminbar">Show L2P:</label>
-				<input id="l2p_checkbox" type=checkbox name="l2p_showAdminbar" v-model="l2p_showAdminbar">
-				<transition name="fade"><div v-show="l2p_showAdminbar" id="vue_holder">
+				<label id="l2p_showAdminbar" for="l2p_showAdminbar" v-show="!l2p_showAdminbar" style="display:none">Show L2P:</label>
+				<input id="l2p_checkbox" type=checkbox name="l2p_showAdminbar" v-show="true" v-model="l2p_showAdminbar" style="display:none">
+				<div v-show="l2p_showAdminbar" id="vue_holder" style="display:none">
 					<label id="l2p_url_label" for="l2purl" v-show="l2p_status==0"> URL:</label>
 					<input id="l2p_url_text" name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url" style="height:20px"/>
 					<span v-html="l2p_span_text" id=l2p_span></span>
@@ -122,7 +117,7 @@ function l2p_admin_bar_menu() {
 					<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset" style="height:30px"/>
 					<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" style="height:30px"/>
 					<input type=hidden value="false" id=l2p_on_tools_page />
-				</div></transition>
+				</div>
 			</div>
 			<style>
 				#l2p_checkbox{
@@ -138,12 +133,6 @@ function l2p_admin_bar_menu() {
 				#l2p_showAdminbar, #l2p_url_label {
 					display:inline-block;
 					color: #ffffff;
-				}
-				.fade-enter-active, .fade-leave-active {
-				  transition: opacity .5s;
-				}
-				.fade-enter, .fade-leave-to  {
-				  opacity: 0;
 				}
 			</style>
 			'

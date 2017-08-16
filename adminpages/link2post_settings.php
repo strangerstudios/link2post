@@ -27,9 +27,9 @@
 		<h3>Enable/Disable Modules</h3>
 		<table>
 			<tr>
-			<th>Module Name</th>
-			<th>Format Post Content</th>
-			<th>Use CPT</th>
+			<th><?php _e('Module Name', 'l2p' ); ?></th>
+			<th><?php _e('Format Post Content', 'l2p' ); ?></th>
+			<th><?php _e('Use CPT', 'l2p' ); ?></th>
 			</tr>
 			<?php 
 			$modules = l2p_get_modules();
