@@ -44,11 +44,11 @@
 					<td>
 						<select name="l2p_<?php echo($value['quick_name']);?>_content_enabled">
 							<option value="enabled" <?php if(get_option("l2p_".$value['quick_name']."_content_enabled")=="enabled"){echo('selected="selected"');}?> ><?php _e('Yes', 'link2post'); ?></option>
-							<option value="disabled" <?php if(get_option("l2p_".$value['quick_name']."_content_enabled"){echo('selected="selected"');}?> ><?php _e('No', 'link2post'); ?></option>
+							<option value="disabled" <?php if(get_option("l2p_".$value['quick_name']."_content_enabled")=="disabled"){echo('selected="selected"');}?> ><?php _e('No', 'link2post'); ?></option>
 						</select>
 					</td>
 					<td>
-						<select name="l2p_<?php echo($module_name);?>_cpt_enabled">
+						<select name="l2p_<?php echo($value['quick_name']);?>_cpt_enabled">
 							<option value="enabled" <?php if(get_option("l2p_".$value['quick_name']."_cpt_enabled")=="enabled"){echo('selected="selected"');}?> ><?php _e('Yes', 'link2post'); ?></option>
 							<option value="disabled" <?php if(get_option("l2p_".$value['quick_name']."_cpt_enabled")=="disabled"){echo('selected="selected"');}?> ><?php _e('No', 'link2post'); ?></option>
 						</select>
