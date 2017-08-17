@@ -19,7 +19,11 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 	if(!empty($title) && !empty($title['text']))
 				$title = sanitize_text_field($title['text']);
 	else{
-		$title="Title is empty";
+		$title = l2p_SelectorDOM::select_element('.gist-header-title', $html);
+		if(!empty($title) && !empty($title['text']))
+			$title = sanitize_text_field($title['text']);
+		else
+			$title="Title is empty";
 	}
 	//grab description from multiline comment
 	$raw_code_url = $url.'/raw';
@@ -46,6 +50,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 		}
 	}
 	//add embed code to post body
+	//uses oembed gist plugin
 	$embed_code = $url;
 
 	//get author's username

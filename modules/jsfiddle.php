@@ -32,7 +32,7 @@ function l2p_jsfiddle_callback($url, $old_post_id=NULL, $return_result=false){
 	$author_url = 'https://jsfiddle.net/user/'.$author_name;
 	
 	//add embed code to post body
-	$embed_code = '<script async src="'.$url.'embed/"></script>';
+	$embed_code = '<iframe width="100%" height="500px" src="'.$url.'" allowfullscreen="allowfullscreen" frameborder="0"></iframe>';
 	
 	//format post content
 	$break = " </br> ";

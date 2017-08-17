@@ -38,8 +38,11 @@ function l2p_codepen_callback($url, $old_post_id=NULL, $return_result=false){
 		$author_url = 'https://codepen.io/'.$author_page;
 		
 		//add embed code to post body
-		$embed_code = '<p data-height="265" data-theme-id="0" data-slug-hash="'.substr($url, -6).'" data-default-tab="css,result" data-user="'.$author_page.'" data-embed-version="2" data-pen-title="'.$title.'" class="codepen">See the Pen <a href="'.$url.'">'.$title.'</a> by '.$author_name.' (<a href="'.$author_url.'">@'.$author_page.'</a>) on <a href="https://codepen.io">CodePen</a>.</p>
-<script async src="https://production-assets.codepen.io/assets/embed/ei.js"></script>';
+		//uses codepen shortcode plugin
+		$embed_code = '[codepen_embed height="265" theme_id="0" slug_hash="'.substr($url, -6).'" default_tab="css,result" user="'.$author_name.'"]';
+		
+		/*'<p data-height="265" data-theme-id="0" data-slug-hash="'.substr($url, -6).'" data-default-tab="css,result" data-user="'.$author_page.'" data-embed-version="2" data-pen-title="'.$title.'" class="codepen">See the Pen <a href="'.$url.'">'.$title.'</a> by '.$author_name.' (<a href="'.$author_url.'">@'.$author_page.'</a>) on <a href="https://codepen.io">CodePen</a>.</p>
+<script async src="https://production-assets.codepen.io/assets/embed/ei.js"></script>';*/
 		
 		//format post content
 		$break = " </br> ";
