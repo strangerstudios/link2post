@@ -36,7 +36,7 @@ function l2p_jsfiddle_callback($url, $old_post_id=NULL, $return_result=false){
 	
 	//format post content
 	$break = " </br> ";
-	$post_content = $description.$break."\n".$embed_code."\n".$break.'This fiddle was made by <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.'Original Fiddle: <a href="'.$url.'">'.$url.'</a>';
+	$post_content = $description.$break."\n".$embed_code."\n".$break.__('This fiddle was made by','link2post').' <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.__('Original Fiddle','link2post').': <a href="'.$url.'">'.$url.'</a>';
 	$post_type = (post_type_exists( "jsfiddle" ) ? 'jsfiddle' : 'post');
 
 	if(empty($old_post_id)){
@@ -84,16 +84,16 @@ function l2p_create_jsfiddle_cpt() {
   register_post_type( 'jsfiddle',
     array(
       'labels' => array(
-        'name' => __( 'Fiddles' ),
-        'singular_name' => __( 'Fiddle' ),
-        'add_new_item' => __('Add New Fiddle'),
-        'edit_item' => __( 'Edit Fiddle' ),
-        'new_item' => __( 'New Fiddle' ),
-		'view_item' => __( 'View Fiddle' ),
-		'search_items' => __( 'Search Fiddles' ),
-		'not_found' => __( 'No Fiddles Found' ),
-		'not_found_in_trash' => __( 'No Fiddles Found In Trash' ),
-		'all_items' => __( 'All Fiddles' ),
+        'name' => __( 'Fiddles','link2post' ),
+        'singular_name' => __( 'Fiddle','link2post' ),
+        'add_new_item' => __('Add New Fiddle','link2post'),
+        'edit_item' => __( 'Edit Fiddle','link2post' ),
+        'new_item' => __( 'New Fiddle','link2post' ),
+		'view_item' => __( 'View Fiddle','link2post' ),
+		'search_items' => __( 'Search Fiddles','link2post' ),
+		'not_found' => __( 'No Fiddles Found','link2post' ),
+		'not_found_in_trash' => __( 'No Fiddles Found In Trash','link2post' ),
+		'all_items' => __( 'All Fiddles','link2post' ),
       ),
       'public' => true,
       'has_archive' => true,

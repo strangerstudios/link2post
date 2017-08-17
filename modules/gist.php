@@ -56,7 +56,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 
 	//format post content
 	$break = " </br> ";
-	$post_content = $description.$break."\n".$embed_code."\n".$break.'This code was written by <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.'Original Gist: <a href="'.$url.'">'.$url.'</a>';
+	$post_content = $description.$break."\n".$embed_code."\n".$break.__('This code was written by','link2post').' <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.__('Original Gist','link2post').': <a href="'.$url.'">'.$url.'</a>';
 	$post_type = (post_type_exists( "gist" ) ? 'gist' : 'post');
 		
 	if(empty($old_post_id)){
@@ -107,16 +107,16 @@ function l2p_create_gist_cpt() {
 	//add check to make sure we should make cpt
 	register_post_type( 'gist',array(
 		'labels' => array(
-		'name' => __( 'Gists' ),
-		'singular_name' => __( 'Gist' ),
-		'add_new_item' => __('Add New Gist'),
-		'edit_item' => __( 'Edit Gist' ),
-		'new_item' => __( 'New Gist' ),
-		'view_item' => __( 'View Gist' ),
-		'search_items' => __( 'Search Gists' ),
-		'not_found' => __( 'No Gists Found' ),
-		'not_found_in_trash' => __( 'No Gists Found In Trash' ),
-		'all_items' => __( 'All Gists' ),
+		'name' => __( 'Gists','link2post' ),
+		'singular_name' => __( 'Gist','link2post' ),
+		'add_new_item' => __('Add New Gist','link2post'),
+		'edit_item' => __( 'Edit Gist','link2post' ),
+		'new_item' => __( 'New Gist','link2post' ),
+		'view_item' => __( 'View Gist','link2post' ),
+		'search_items' => __( 'Search Gists','link2post' ),
+		'not_found' => __( 'No Gists Found','link2post' ),
+		'not_found_in_trash' => __( 'No Gists Found In Trash','link2post' ),
+		'all_items' => __( 'All Gists','link2post' ),
 		),
 		'public' => true,
 		'has_archive' => true,

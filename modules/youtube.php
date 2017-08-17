@@ -39,7 +39,7 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 
 		//format post content
 		$break = " </br> ";
-		$post_content = $description.$break."\n".$embed_code."\n".$break.__('This video was made by', link2post). '<a href="'.$channel_url.'">'.$channel_name.'</a>'.$break.__('Original Video:', link2post). '<a href="'.$url.'">'.$url.'</a>';
+		$post_content = $description.$break."\n".$embed_code."\n".$break.__('This video was made by', 'link2post'). '<a href="'.$channel_url.'">'.$channel_name.'</a>'.$break.__('Original Video:', 'link2post'). '<a href="'.$url.'">'.$url.'</a>';
 		$post_type = (post_type_exists( "youtube" ) ? 'youtube' : 'post');
 
 		if(empty($old_post_id)){
@@ -87,16 +87,16 @@ function l2p_create_youtube_cpt() {
   register_post_type( 'youtube',
     array(
       'labels' => array(
-        'name' => __( 'YouTube Videos' ),
-        'singular_name' => __( 'YouTube Video' ),
-        'add_new_item' => __('Add New YouTube Video'),
-        'edit_item' => __( 'Edit YouTube Video' ),
-        'new_item' => __( 'New YouTube Video' ),
-		'view_item' => __( 'View YouTube Videos' ),
-		'search_items' => __( 'Search YouTube Videos' ),
-		'not_found' => __( 'No YouTube Videos Found' ),
-		'not_found_in_trash' => __( 'No YouTube Videos Found In Trash' ),
-		'all_items' => __( 'All Videos' ),
+        'name' => __( 'YouTube Videos', 'link2post' ),
+        'singular_name' => __( 'YouTube Video', 'link2post' ),
+        'add_new_item' => __('Add New YouTube Video', 'link2post'),
+        'edit_item' => __( 'Edit YouTube Video', 'link2post' ),
+        'new_item' => __( 'New YouTube Video', 'link2post' ),
+		'view_item' => __( 'View YouTube Videos', 'link2post' ),
+		'search_items' => __( 'Search YouTube Videos', 'link2post' ),
+		'not_found' => __( 'No YouTube Videos Found', 'link2post' ),
+		'not_found_in_trash' => __( 'No YouTube Videos Found In Trash', 'link2post' ),
+		'all_items' => __( 'All Videos', 'link2post' ),
       ),
       'public' => true,
       'has_archive' => true,
