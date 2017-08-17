@@ -21,38 +21,44 @@
 	}
 ?>
 <div class="wrap">
-	<h2>Link2Post</h2>
-	
+	<h2><?php _e('Link2Post', 'link2post'); ?></h2>
 	<form method="post">
-		<h3>Enable/Disable Modules</h3>
-		<table>
-			<tr>
-			<th>Module Name</th>
-			<th>Format Post Content</th>
-			<th>Use CPT</th>
-			</tr>
-			<?php 
-			foreach($module_names as $module_name){
+		<h3><?php _e('Supported Modules', 'link2post'); ?></h3>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th><?php _e('Module', 'link2post'); ?></th>
+					<th><?php _e('Format Post Content', 'link2post'); ?></th>
+					<th><?php _e('Create and Use CPT', 'link2post'); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach($module_names as $module_name) {
+				?>
+				<tr>
+					<th>
+						<label for="<?php echo $module_name; ?>"><?php echo $module_name ; ?></label>
+					</th>
+					<td>
+						<select name="l2p_<?php echo($module_name);?>_content_enabled">
+							<option value="enabled" <?php if(get_option("l2p_".$module_name."_content_enabled")=="enabled"){echo('selected="selected"');}?> ><?php _e('Yes', 'link2post'); ?></option>
+							<option value="disabled" <?php if(get_option("l2p_".$module_name."_content_enabled")=="disabled"){echo('selected="selected"');}?> ><?php _e('No', 'link2post'); ?></option>
+						</select>
+					</td>
+					<td>
+						<select name="l2p_<?php echo($module_name);?>_cpt_enabled">
+							<option value="enabled" <?php if(get_option("l2p_".$module_name."_cpt_enabled")=="enabled"){echo('selected="selected"');}?> ><?php _e('Yes', 'link2post'); ?></option>
+							<option value="disabled" <?php if(get_option("l2p_".$module_name."_cpt_enabled")=="disabled"){echo('selected="selected"');}?> ><?php _e('No', 'link2post'); ?></option>
+						</select>
+					</td>
+				</tr>
+				<?php
+				}
 			?>
-				<tr><th>
-					<label for="<?php echo($module_name);?>"><?php echo($module_name);?>:</label>
-				</th>
-				<td>
-					<select name="l2p_<?php echo($module_name);?>_content_enabled">
-						<option value="enabled" <?php if(get_option("l2p_".$module_name."_content_enabled")=="enabled"){echo('selected="selected"');}?> >Enabled</option>
-						<option value="disabled" <?php if(get_option("l2p_".$module_name."_content_enabled")=="disabled"){echo('selected="selected"');}?> >Disabled</option>
-					</select>
-				</td>
-				<td>
-					<select name="l2p_<?php echo($module_name);?>_cpt_enabled">
-						<option value="enabled" <?php if(get_option("l2p_".$module_name."_cpt_enabled")=="enabled"){echo('selected="selected"');}?> >Enabled</option>
-						<option value="disabled" <?php if(get_option("l2p_".$module_name."_cpt_enabled")=="disabled"){echo('selected="selected"');}?> >Disabled</option>
-					</select>
-				</td></tr>
-			<?php	
-			}
-			?>
+			</tbody>
 		</table>
-		<input name="l2p_save" type="submit" class="button-primary" value="Save Settings" />
+		<p class="submit">
+			<input name="l2p_save" type="submit" class="button-primary" value="Save Settings" />
+		</p>
 	</form>
 </div>
