@@ -20,6 +20,10 @@ require_once(L2P_DIR . '/modules/gist.php');
 require_once(L2P_DIR . '/modules/codepen.php');
 require_once(L2P_DIR . '/modules/jsfiddle.php');
 
+/*
+	Require any custom modules here
+*/
+
 $modules = l2p_get_modules();
 
 
@@ -64,6 +68,9 @@ function l2p_get_modules(){
 	return $modules;
 }
 
+/*
+	Enqueue Vue and javascript for link2post functionality
+*/
 function l2p_enqueue_scripts(){
 	if(current_user_can('administrator') ) {
 		wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js', NULL, NULL);		
@@ -75,7 +82,7 @@ add_action( 'wp_enqueue_scripts', 'l2p_enqueue_scripts');
 add_action( 'admin_enqueue_scripts', 'l2p_enqueue_scripts' );
 
 /*
-	Add Admin Page
+	Add Admin Pages
 */
 function l2p_admin_pages() {
 	add_submenu_page( 'tools.php', 'Link2Post', 'Link2Post', 'edit_posts', 'link2post_tools', 'l2p_admin_tool_pages_main' );
@@ -91,6 +98,9 @@ function l2p_admin_settings_pages_main() {
 	require_once(dirname(__FILE__) . '/adminpages/link2post_settings.php');
 }
 
+/*
+	Set up link2post field in admin bar
+*/
 function l2p_admin_bar_menu() {
 	global $wp_admin_bar;
 	if(!current_user_can('edit_posts'))
@@ -142,6 +152,10 @@ function l2p_admin_bar_menu() {
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu', 1000);
 
+/*
+	Returns true if user is on the Link2Post tools page
+	Used to hide l2p admin bar on that page to avoid confusion
+*/
 function l2p_on_tools_page(){
 	$on_tools_page = false;
 	if(function_exists ( "get_current_screen" )){
@@ -152,6 +166,10 @@ function l2p_on_tools_page(){
 	return $on_tools_page;
 }
 
+/*
+	Called using AJAX after submitting l2p url
+	Creates post for new urls, asks to update if post already exists
+*/
 function l2p_submit() {
 	global $current_user, $wpdb;
 	$url = $_POST["l2p_url"];
@@ -172,7 +190,6 @@ function l2p_submit() {
 		echo $JSONtoReturn;
 		exit;
 	}	
-	//echo("is old post");
 	$objToReturn->new_post_created = false;
 	$objToReturn->old_post_id = $old_post_id;
 	$objToReturn->old_post_url = get_permalink($old_post_id);
@@ -187,7 +204,6 @@ function l2p_submit() {
     		$found_match = true;
     		//we found one, use the module's parse function now
     		if(empty($value['callback']) || empty($value['can_update']) || $value['can_update']==false){
-    			//echo __("Broken callback function.", 'link2post');
     			$objToReturn->can_update = false;
     		}
 			else{
@@ -204,7 +220,10 @@ function l2p_submit() {
 }
 add_action( 'wp_ajax_l2p_submit', 'l2p_submit' );
 
-
+/*
+	Called from l2p_submit() to create new post
+	or using AJAX to update if post already exists
+*/
 function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	global $current_user, $wpdb;
 	if(empty($url)){
@@ -227,13 +246,15 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
     	if(strpos($host, $value['host']) !== false && get_option("l2p_".$value['quick_name']."_content_enabled")=="enabled"){
     		//we found one, use the module's parse function now
     		if(empty($value['callback'])){
-				//can't 
+				//can't update, no callback function
     			exit;
     		}
     		elseif($return_result){
+    			//use if function call is from l2p_submit
 				return call_user_func($value['callback'], $url, NULL, $return_result);
     		}
     		elseif(!empty($value['can_update']) && $value['can_update']==true){
+    			//use if function call is from AJAX request
 				call_user_func($value['callback'], $url, $old_post_id, $return_result);
 				exit;
 			}
@@ -242,12 +263,13 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 			}
     	}
 	}
-		
+	
+	//No module found, parse as generic post	
 	require_once(dirname(__FILE__).'/lib/selector.php');	
 	try{
 		$html = wp_remote_retrieve_body(wp_remote_get($url));
 		
-		//scrape the title
+		//parse the title
 		$title = l2p_SelectorDOM::select_element('title', $html);
 		if(!empty($title) && !empty($title['text']))
 			$title = sanitize_text_field($title['text']);
@@ -255,7 +277,7 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 			$title = "No title";
 		}
 		
-		//scrape the description
+		//parse the description
 		$description = l2p_SelectorDOM::select_element('meta[name=description]', $html);
 		if(!empty($description) && !empty($description['attributes']) && !empty($description['attributes']['content']))
 			$description = sanitize_text_field($description['attributes']['content']);

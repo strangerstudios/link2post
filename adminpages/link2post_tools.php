@@ -1,7 +1,4 @@
 <?php 
-	//wrap this in some error handling to detect form submission with an empty or invalid URL
-	//use filter_var function to check URL http://php.net/manual/en/function.filter-var.php
-	
 	$l2p_js_url = plugin_dir_url( __FILE__ ) . "js/l2p_vue.js";
 	
 	

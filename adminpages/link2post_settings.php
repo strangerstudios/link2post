@@ -3,6 +3,7 @@
 	$modules = l2p_get_modules();
 	if(!empty($_POST['l2p_save']))
 	{
+		//update settings
 		foreach($modules as $key => $value){
 			if($_POST['l2p_'.$value['quick_name'].'_content_enabled']=='enabled'){
 				update_option('l2p_'.$value['quick_name'].'_content_enabled', 'enabled');
@@ -14,6 +15,7 @@
 		}
 		echo "<meta http-equiv='refresh' content='0'>";
 	}
+	//flush rewrite rules
 	add_action('shutdown','l2p_flush');
 	function l2p_flush(){
 		flush_rewrite_rules(true);
