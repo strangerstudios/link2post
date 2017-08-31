@@ -70,7 +70,7 @@ function l2p_sample_module_callback($url, $old_post_id=NULL, $return_result=fals
 				'post_author' => $current_user->ID,
 				'post_status' => 'publish',
 				'meta_input' => array(
-					'l2p_url' => $url,
+					'l2p_url' => esc_url_raw($url),
 				)
 			);
 		$post_id = wp_insert_post($postarr);

@@ -26,7 +26,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 			$title="Title is empty";
 	}
 	//grab description from multiline comment
-	$raw_code_url = $url.'/raw';
+	$raw_code_url = esc_url_raw($url).'/raw';
 	$raw_code_page = wp_remote_retrieve_body(wp_remote_get($raw_code_url));
 	$code = " ".htmlspecialchars($raw_code_page); 
 	$start = '/*';
@@ -61,7 +61,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 
 	//format post content
 	$break = " </br> ";
-	$post_content = $description.$break."\n".$embed_code."\n".$break.__('This code was written by','link2post').' <a href="'.$github_profile_url.'">'.$author_username.'</a>.'.$break.__('Original Gist','link2post').': <a href="'.$url.'">'.$url.'</a>';
+	$post_content = $description.$break."\n".$embed_code."\n".$break.__('This code was written by','link2post').' <a href="'.esc_url_raw($github_profile_url).'">'.esc_textarea($author_username).'</a>.'.$break.__('Original Gist','link2post').': <a href="'.esc_url_raw($url).'">'.esc_url_raw($url).'</a>';
 	$post_type = (post_type_exists( "gist" ) ? 'gist' : 'post');
 		
 	if(empty($old_post_id)){
@@ -73,7 +73,7 @@ function l2p_gist_callback($url, $old_post_id=NULL, $return_result=false){
 				'post_author' => $current_user->ID,
 				'post_status' => 'publish',
 				'meta_input' => array(
-					'l2p_url' => $url,
+					'l2p_url' => esc_url_raw($url),
 				)
 			);
 		$post_id = wp_insert_post($postarr);

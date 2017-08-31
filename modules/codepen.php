@@ -39,14 +39,14 @@ function l2p_codepen_callback($url, $old_post_id=NULL, $return_result=false){
 		
 		//add embed code to post body
 		//uses codepen shortcode plugin
-		$embed_code = '[codepen_embed height="265" theme_id="0" slug_hash="'.substr($url, -6).'" default_tab="css,result" user="'.$author_name.'"]';
+		$embed_code = '[codepen_embed height="265" theme_id="0" slug_hash="'.esc_attr(substr($url, -6)).'" default_tab="css,result" user="'.$author_name.'"]';
 		
 		/*'<p data-height="265" data-theme-id="0" data-slug-hash="'.substr($url, -6).'" data-default-tab="css,result" data-user="'.$author_page.'" data-embed-version="2" data-pen-title="'.$title.'" class="codepen">See the Pen <a href="'.$url.'">'.$title.'</a> by '.$author_name.' (<a href="'.$author_url.'">@'.$author_page.'</a>) on <a href="https://codepen.io">CodePen</a>.</p>
 <script async src="https://production-assets.codepen.io/assets/embed/ei.js"></script>';*/
 		
 		//format post content
 		$break = " </br> ";
-		$post_content = $description.$break."\n".$embed_code."\n".$break.__('This pen was made by','link2post').' <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.__('Original Pen','link2post').': <a href="'.$url.'">'.$url.'</a>';
+		$post_content = $description.$break."\n".$embed_code."\n".$break.__('This pen was made by','link2post').' <a href="'.esc_url_raw($author_url).'">'.$author_name.'</a>.'.$break.__('Original Pen','link2post').': <a href="'.esc_url_raw($url).'">'.esc_url_raw($url).'</a>';
 		$post_type = (post_type_exists( "codepen" ) ? 'codepen' : 'post');
 
 		if(empty($old_post_id)){
@@ -58,7 +58,7 @@ function l2p_codepen_callback($url, $old_post_id=NULL, $return_result=false){
 				'post_author' => $current_user->ID,
 				'post_status' => 'publish',
 				'meta_input' => array(
-					'l2p_url' => $url,
+					'l2p_url' => esc_url_raw($url),
 				)
 			);
 		$post_id = wp_insert_post($postarr);

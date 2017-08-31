@@ -167,7 +167,7 @@ function l2p_on_tools_page(){
 */
 function l2p_submit() {
 	global $current_user, $wpdb;
-	$url = $_POST["l2p_url"];
+	$url = $_POST["l2p_url"];			//we escape this later when used in queries and inserts
 	
 	//no URL, bail
 	if(empty($url))
@@ -176,7 +176,7 @@ function l2p_submit() {
 	$objToReturn->on_tools_page = l2p_on_tools_page();
 	
 	//check if we've already processed this URL
-	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
+	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_url_raw($url) . "' LIMIT 1";
 	$old_post_id = $wpdb->get_var($sqlQuery);
 	if(empty((int)$old_post_id) || get_post_status((int)$old_post_id)!='publish'){
 		$objToReturn->new_post_created = true;
@@ -281,7 +281,7 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 		}
 		
 		//add link back to the URL to the description:
-		$description .= "\n\n" . sprintf(__('Originally posted at %s.', 'link2post'), '<a href="' . esc_url($url) . '">' . $host . '</a>');
+		$description .= "\n\n" . sprintf(__('Originally posted at %s.', 'link2post'), '<a href="' . esc_url_raw($url) . '">' . $host . '</a>');
 		
 		if(empty($old_post_id)){
 			//create a link post and insert it
@@ -292,7 +292,7 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 				'post_author' => $current_user->ID,
 				'post_status' => 'publish',
 				'meta_input' => array(
-					'l2p_url' => $url,
+					'l2p_url' => esc_url_raw($url),
 				)
 			);
 		
@@ -325,4 +325,3 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	}catch (Exception $e) {}
 }		
 add_action( 'wp_ajax_l2p_update', 'l2p_update' );
-?>

@@ -32,11 +32,11 @@ function l2p_jsfiddle_callback($url, $old_post_id=NULL, $return_result=false){
 	$author_url = 'https://jsfiddle.net/user/'.$author_name;
 	
 	//add embed code to post body
-	$embed_code = '<iframe width="100%" height="500px" src="'.$url.'" allowfullscreen="allowfullscreen" frameborder="0"></iframe>';
+	$embed_code = '<iframe width="100%" height="500px" src="'.esc_url_raw($url).'" allowfullscreen="allowfullscreen" frameborder="0"></iframe>';
 	
 	//format post content
 	$break = " </br> ";
-	$post_content = $description.$break."\n".$embed_code."\n".$break.__('This fiddle was made by','link2post').' <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.__('Original Fiddle','link2post').': <a href="'.$url.'">'.$url.'</a>';
+	$post_content = $description.$break."\n".$embed_code."\n".$break.__('This fiddle was made by','link2post').' <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.__('Original Fiddle','link2post').': <a href="'.esc_url_raw($url).'">'.esc_url_raw($url).'</a>';
 	$post_type = (post_type_exists( "jsfiddle" ) ? 'jsfiddle' : 'post');
 
 	if(empty($old_post_id)){
@@ -48,7 +48,7 @@ function l2p_jsfiddle_callback($url, $old_post_id=NULL, $return_result=false){
 				'post_author' => $current_user->ID,
 				'post_status' => 'publish',
 				'meta_input' => array(
-					'l2p_url' => $url,
+					'l2p_url' => esc_url_raw($url),
 				)
 			);
 		$post_id = wp_insert_post($postarr);

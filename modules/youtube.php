@@ -39,7 +39,7 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 
 		//format post content
 		$break = " </br> ";
-		$post_content = $description.$break."\n".$embed_code."\n".$break.__('This video was made by', 'link2post'). '<a href="'.$channel_url.'">'.$channel_name.'</a>'.$break.__('Original Video:', 'link2post'). '<a href="'.$url.'">'.$url.'</a>';
+		$post_content = $description.$break."\n".esc_url_raw($embed_code)."\n".$break.__('This video was made by', 'link2post'). '<a href="'.esc_url_raw($channel_url).'">'.$channel_name.'</a>'.$break.__('Original Video:', 'link2post'). '<a href="'.esc_attr($url).'">'.esc_url($url).'</a>';
 		$post_type = (post_type_exists( "youtube" ) ? 'youtube' : 'post');
 
 		if(empty($old_post_id)){
@@ -51,7 +51,7 @@ function l2p_youtube_callback($url, $old_post_id=NULL, $return_result=false){
 				'post_author' => $current_user->ID,
 				'post_status' => 'publish',
 				'meta_input' => array(
-					'l2p_url' => $url,
+					'l2p_url' => esc_url_raw($url),
 				)
 			);
 		$post_id = wp_insert_post($postarr);
