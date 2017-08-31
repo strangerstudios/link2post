@@ -83,7 +83,7 @@ function l2p_get_modules(){
 	Enqueue Vue and javascript for link2post functionality
 */
 function l2p_enqueue_scripts(){
-	if(current_user_can('administrator') ) {
+	if(current_user_can('edit_posts') ) {
 		wp_enqueue_script("vue", plugins_url('link2post/js/vue.js', L2P_DIR), NULL, '2.0.3');		
 		wp_enqueue_script("l2p_js_tools", plugins_url('link2post/js/link2post.js', L2P_DIR), array("jquery", "vue"), L2P_VERSION);
 		wp_localize_script( "l2p_js_tools", "ajax_target",  admin_url( 'admin-ajax.php' ));
@@ -167,6 +167,11 @@ function l2p_on_tools_page(){
 */
 function l2p_submit() {
 	global $current_user, $wpdb;
+	
+	if(!current_user_can('edit_posts') )
+		return;
+	
+	//grab the URL
 	$url = $_POST["l2p_url"];			//we escape this later when used in queries and inserts
 	
 	//no URL, bail
@@ -221,9 +226,13 @@ add_action( 'wp_ajax_l2p_submit', 'l2p_submit' );
 */
 function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	global $current_user, $wpdb;
+	
+	if(!current_user_can('edit_posts') )
+		return;
+	
 	if(empty($url)){
 		if(isset($_POST["l2p_url"]))
-			$url = $_POST["l2p_url"];
+			$url = $_POST["l2p_url"];		//this gets escaped later when used in queries and updates
 	}
 	if($old_post_id==NULL){
 		if(isset($_POST["l2p_old_post_id"]))
