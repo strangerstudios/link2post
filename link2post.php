@@ -9,11 +9,6 @@ Author URI: http://www.strangerstudios.com
 Text Domain: link2post
 */
 
-/*
-	Notes
-	
-	* Do we want to load a library for scraping HTML? https://github.com/duzun/hQuery.php
-*/
 define('L2P_VERSION', '.1');
 
 /**
@@ -25,25 +20,68 @@ function l2p_enqueue_custom_admin_style() {
 	wp_enqueue_style( 'l2p_wp_admin_css' );
 }
 add_action( 'admin_enqueue_scripts', 'l2p_enqueue_custom_admin_style' );
+add_action( 'wp_enqueue_scripts', 'l2p_enqueue_custom_admin_style' );
 
 /*
 	Load modules
 */
 define('L2P_DIR', dirname(__FILE__));
-foreach (scandir(L2P_DIR.'/modules') as $filename) {
-    $path = dirname(__FILE__) . '/modules/' . $filename;
-    if (is_file($path) && '.php'==substr($path, -4)) {
-    	$module_name = substr($filename, 0, -4);
-        //if enabled, requre. else continue
-        if(get_option("l2p_".$module_name."_content_enabled")=="enabled"){
-       		require_once($path);
-       		if(get_option("l2p_".$module_name."_cpt_enabled")=="enabled"){
-        		add_action( 'init', 'l2p_create_'.$module_name.'_cpt' );
-        	}
-        }
-    }
+require_once(L2P_DIR . '/modules/youtube.php');
+require_once(L2P_DIR . '/modules/gist.php');
+require_once(L2P_DIR . '/modules/codepen.php');
+require_once(L2P_DIR . '/modules/jsfiddle.php');
+
+/*
+	Require any custom modules here
+*/
+
+$modules = l2p_get_modules();
+
+
+foreach($modules as $key => $value){
+/*
+	$key is name of the file(ie. 'gist.php')
+	$value is associative array containing info on module
+*/
+	if(get_option("l2p_".$value['quick_name']."_cpt_enabled")=="enabled"){
+		add_action('init',$value['create_cpt']);
+	}
 }
 
+function myplugin_activate() {
+	$modules = l2p_get_modules();
+	foreach($modules as $key => $value){
+		if(!get_option("l2p_".$value['quick_name']."_content_enabled")){
+			update_option("l2p_".$value['quick_name']."_content_enabled", 'enabled');
+			call_user_func($value['create_cpt']);
+		}
+		elseif(get_option("l2p_".$value['quick_name']."_content_enabled")=='enabled'){
+			call_user_func($value['create_cpt']);
+		}
+		if(!get_option("l2p_".$value['quick_name']."_cpt_enabled")){
+			update_option("l2p_".$value['quick_name']."_cpt_enabled", 'disabled');
+		}
+	}
+	flush_rewrite_rules(true);
+}
+register_activation_hook( __FILE__, 'myplugin_activate' );
+
+function l2p_get_modules(){
+	/**
+	 * Filter to add Link2Post modules. Modules are used to handle parsing
+	 * for URLs from specific sites.
+	 *
+	 * @since .1
+	 *
+	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
+	 */
+	$modules = apply_filters('l2p_modules', array());
+	return $modules;
+}
+
+/*
+	Enqueue Vue and javascript for link2post functionality
+*/
 function l2p_enqueue_scripts(){
 	if(current_user_can('administrator') ) {
 		wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js', NULL, NULL);		
@@ -55,7 +93,7 @@ add_action( 'wp_enqueue_scripts', 'l2p_enqueue_scripts');
 add_action( 'admin_enqueue_scripts', 'l2p_enqueue_scripts' );
 
 /*
-	Add Admin Page
+	Add Admin Pages
 */
 function l2p_admin_pages() {
 	add_submenu_page( 'tools.php', 'Link2Post', 'Link2Post', 'edit_posts', 'link2post_tools', 'l2p_admin_tool_pages_main' );
@@ -71,18 +109,21 @@ function l2p_admin_settings_pages_main() {
 	require_once(dirname(__FILE__) . '/adminpages/link2post_settings.php');
 }
 
+/*
+	Set up link2post field in admin bar
+*/
 function l2p_admin_bar_menu() {
 	global $wp_admin_bar;
 	if(!current_user_can('edit_posts'))
 		return;
 	
-/*
-$wp_admin_bar->add_menu( array(
-		'id' => 'link2post',
-		'parent' => 'new-content',
-		'title' => __( 'Link2Post', 'link2post' ),
-		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
-*/
+	/*
+	$wp_admin_bar->add_menu( array(
+			'id' => 'link2post',
+			'parent' => 'new-content',
+			'title' => __( 'Link2Post', 'link2post' ),
+			'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
+	*/
 	$wp_admin_bar->add_node( array(
 		'id' => 'l2p_vue',
 		'title' => '<label id="l2p_showAdminbar" for="l2p_showAdminbar" v-show="!l2p_showAdminbar">Link2Post</label>',
@@ -103,10 +144,13 @@ $wp_admin_bar->add_menu( array(
 		'id' => 'l2p_input',
 		'title' => $form,
 	) );
-
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu', 1000);
 
+/*
+	Returns true if user is on the Link2Post tools page
+	Used to hide l2p admin bar on that page to avoid confusion
+*/
 function l2p_on_tools_page(){
 	$on_tools_page = false;
 	if(function_exists ( "get_current_screen" )){
@@ -117,6 +161,10 @@ function l2p_on_tools_page(){
 	return $on_tools_page;
 }
 
+/*
+	Called using AJAX after submitting l2p url
+	Creates post for new urls, asks to update if post already exists
+*/
 function l2p_submit() {
 	global $current_user, $wpdb;
 	$url = $_POST["l2p_url"];
@@ -130,36 +178,27 @@ function l2p_submit() {
 	//check if we've already processed this URL
 	$sqlQuery = "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'l2p_url' AND meta_value = '" . esc_sql($url) . "' LIMIT 1";
 	$old_post_id = $wpdb->get_var($sqlQuery);
-	if(empty((int)$old_post_id)){
+	if(empty((int)$old_post_id) || get_post_status((int)$old_post_id)!='publish'){
 		$objToReturn->new_post_created = true;
 		$objToReturn->new_post_url = l2p_update($url, NULL, true);
 		$JSONtoReturn = json_encode($objToReturn);
 		echo $JSONtoReturn;
 		exit;
 	}	
-	//echo("is old post");
 	$objToReturn->new_post_created = false;
 	$objToReturn->old_post_id = $old_post_id;
 	$objToReturn->old_post_url = get_permalink($old_post_id);
-	/**
-	 * Filter to add Link2Post modules. Modules are used to handle parsing
-	 * for URLs from specific sites.
-	 *
-	 * @since .1
-	 *
-	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
-	 */
-	$modules = apply_filters('l2p_modules', array());
+
+	$modules = l2p_get_modules();
 	
 	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
 	$found_match = false;
-	foreach($modules as $module_host => $arr) {
-    	if($host == $module_host){
+	foreach($modules as $key => $value) {
+    	if($host == $value['host'] && get_option("l2p_".$value['quick_name']."_content_enabled")=="enabled"){
     		$found_match = true;
     		//we found one, use the module's parse function now
-    		if(empty($arr['callback']) || empty($arr['can_update']) || $arr['can_update']==false){
-    			//echo __("Broken callback function.", 'link2post');
+    		if(empty($value['callback']) || empty($value['can_update']) || $value['can_update']==false){
     			$objToReturn->can_update = false;
     		}
 			else{
@@ -176,7 +215,10 @@ function l2p_submit() {
 }
 add_action( 'wp_ajax_l2p_submit', 'l2p_submit' );
 
-
+/*
+	Called from l2p_submit() to create new post
+	or using AJAX to update if post already exists
+*/
 function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	global $current_user, $wpdb;
 	if(empty($url)){
@@ -190,30 +232,25 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 	
 	if(empty($url))
 		return false;
-	/**
-	 * Filter to add Link2Post modules. Modules are used to handle parsing
-	 * for URLs from specific sites.
-	 *
-	 * @since .1
-	 *
-	 * @param array $modules Array of modules. Each element in array should be [host=>callback_function].	 
-	 */
-	$modules = apply_filters('l2p_modules', array());
+		
+	$modules = l2p_get_modules();
 		
 	//check the domain of the URL to see if it matches a module
 	$host = parse_url($url, PHP_URL_HOST);
-	foreach($modules as $module_host => $arr) {
-    	if(strpos($host, $module_host) !== false){
+	foreach($modules as $key => $value) {
+    	if(strpos($host, $value['host']) !== false && get_option("l2p_".$value['quick_name']."_content_enabled")=="enabled"){
     		//we found one, use the module's parse function now
-    		if(empty($arr['callback'])){
-				//can't 
+    		if(empty($value['callback'])){
+				//can't update, no callback function
     			exit;
     		}
     		elseif($return_result){
-				return call_user_func($arr['callback'], $url, NULL, $return_result);
+    			//use if function call is from l2p_submit
+				return call_user_func($value['callback'], $url, NULL, $return_result);
     		}
-    		elseif(!empty($arr['can_update']) && $arr['can_update']==true){
-				call_user_func($arr['callback'], $url, $old_post_id, $return_result);
+    		elseif(!empty($value['can_update']) && $value['can_update']==true){
+    			//use if function call is from AJAX request
+				call_user_func($value['callback'], $url, $old_post_id, $return_result);
 				exit;
 			}
 			else{
@@ -221,12 +258,13 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 			}
     	}
 	}
-		
+	
+	//No module found, parse as generic post	
 	require_once(dirname(__FILE__).'/lib/selector.php');	
 	try{
 		$html = wp_remote_retrieve_body(wp_remote_get($url));
 		
-		//scrape the title
+		//parse the title
 		$title = l2p_SelectorDOM::select_element('title', $html);
 		if(!empty($title) && !empty($title['text']))
 			$title = sanitize_text_field($title['text']);
@@ -234,7 +272,7 @@ function l2p_update($url='', $old_post_id=NULL, $return_result=false){
 			$title = "No title";
 		}
 		
-		//scrape the description
+		//parse the description
 		$description = l2p_SelectorDOM::select_element('meta[name=description]', $html);
 		if(!empty($description) && !empty($description['attributes']) && !empty($description['attributes']['content']))
 			$description = sanitize_text_field($description['attributes']['content']);
