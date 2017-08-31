@@ -16,6 +16,16 @@ Text Domain: link2post
 */
 define('L2P_VERSION', '.1');
 
+/**
+ * Register and enqueue a custom stylesheet in the WordPress admin.
+ */
+function l2p_enqueue_custom_admin_style() {
+	$admin_css = plugin_dir_url( __FILE__ ) . 'css/admin.css';
+	wp_register_style( 'l2p_wp_admin_css', $admin_css, false, '1.0.0' );
+	wp_enqueue_style( 'l2p_wp_admin_css' );
+}
+add_action( 'admin_enqueue_scripts', 'l2p_enqueue_custom_admin_style' );
+
 /*
 	Load modules
 */
@@ -66,55 +76,34 @@ function l2p_admin_bar_menu() {
 	if(!current_user_can('edit_posts'))
 		return;
 	
-	$wp_admin_bar->add_menu( array(
+/*
+$wp_admin_bar->add_menu( array(
 		'id' => 'link2post',
 		'parent' => 'new-content',
 		'title' => __( 'Link2Post', 'link2post' ),
 		'href' => get_admin_url(NULL, '/tools.php?page=link2post_tools') ) );
-	if(!l2p_on_tools_page()){
-		$wp_admin_bar->add_menu( array(
-			'id' => 'l2p_input',
-			'title' => '
-			<div id="l2p_vue" style="height:30px; ">
-				<label id="l2p_showAdminbar" for="l2p_showAdminbar" v-show="!l2p_showAdminbar">Show L2P:</label>
-				<input id="l2p_checkbox" type=checkbox name="l2p_showAdminbar" v-model="l2p_showAdminbar">
-				<transition name="fade"><div v-show="l2p_showAdminbar" id="vue_holder">
-					<label id="l2p_url_label" for="l2purl" v-show="l2p_status==0"> URL:</label>
-					<input id="l2p_url_text" name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url" style="height:20px"/>
-					<span v-html="l2p_span_text" id=l2p_span></span>
-					<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit" style="height:30px"/>
-					<input type=button value="update" v-show="l2p_status==1" v-on:click="l2p_update" style="height:30px"/>
-					<input type=button value="don\'t update" v-show="l2p_status==1" v-on:click="l2p_reset" style="height:30px"/>
-					<input type=button value="convert another" v-show="l2p_status==3" v-on:click="l2p_reset" style="height:30px"/>
-					<input type=hidden value="false" id=l2p_on_tools_page />
-				</div></transition>
-			</div>
-			<style>
-				#l2p_checkbox{
-					height:16px;
-					width:16px;
-				}
-				#l2p_span>a{
-					color:#96e2ff;
-				}
-				#vue_holder, #l2p_url_text {
-					display:inline-block;
-				}
-				#l2p_showAdminbar, #l2p_url_label {
-					display:inline-block;
-					color: #ffffff;
-				}
-				.fade-enter-active, .fade-leave-active {
-				  transition: opacity .5s;
-				}
-				.fade-enter, .fade-leave-to  {
-				  opacity: 0;
-				}
-			</style>
-			'
-		) );
+*/
+	$wp_admin_bar->add_node( array(
+		'id' => 'l2p_vue',
+		'title' => '<label id="l2p_showAdminbar" for="l2p_showAdminbar" v-show="!l2p_showAdminbar">Link2Post</label>',
+		'meta'  => array( 'class' => 'l2p_toolbar' )
+	) );
 
-	}
+	$form = '<input id="l2p_url_text" class="adminbar-input" placeholder="' . __( 'Paste URL', 'link2post' ) . '" name="l2purl" type="text" v-show="l2p_status==0" v-model="l2p_url" />';
+	$form .= '<label id="l2p_url_label" class="screen-reader-text" for="l2purl" v-show="l2p_status==0">' . __( 'Paste URL', 'link2post' ) . '</label>';
+	$form .= '<span v-html="l2p_span_text" id=l2p_span></span>';
+	$form .= '<input type="button" class="button button-primary" value="' . __( 'Create Post', 'link2post' ) . '" v-show="l2p_status==0" v-on:click="l2p_submit" />';
+	$form .= '<input type="button" class="button" value="' . __( 'Update', 'link2post' ) . '" v-show="l2p_status==1" v-on:click="l2p_update" />';
+	$form .= '<input type="button" class="button" value="' . __( 'Don\'t Update', 'link2post' ) . '" v-show="l2p_status==1" v-on:click="l2p_reset" />';
+	$form .= '<input type="button" class="button" value="' . __( 'Reset', 'link2post' ) . '" v-show="l2p_status==3" v-on:click="l2p_reset" />';
+	$form .= '<input type="hidden" class="button" value="' . __( 'False', 'link2post' ) . '" id=l2p_on_tools_page />';
+
+	$wp_admin_bar->add_node( array(
+		'parent' => 'l2p_vue',
+		'id' => 'l2p_input',
+		'title' => $form,
+	) );
+
 }
 add_action('admin_bar_menu', 'l2p_admin_bar_menu', 1000);
 

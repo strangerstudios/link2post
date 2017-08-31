@@ -1,0 +1,13 @@
+
+#wp-admin-bar-l2p_vue .button, 
+#wp-admin-bar-l2p_vue #l2p_url_text {
+	line-height: 15px; 
+	padding: 3px;
+}
+#wp-admin-bar-l2p_vue #l2p_span {
+	margin-right: 5px;
+}
+#wp-admin-bar-l2p_vue #l2p_span a {
+	display: inline; 
+	padding: 0; 
+}

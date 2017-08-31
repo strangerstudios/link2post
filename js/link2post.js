@@ -1,6 +1,6 @@
 jQuery( document ).ready(function() {
 	var l2p_vue = new Vue({
-	  el: '#l2p_vue',
+	  el: '#wp-admin-bar-l2p_vue',
 	  data: {
 		//0: No submission yet
 		//1: Submission, asking to update
@@ -30,7 +30,7 @@ jQuery( document ).ready(function() {
 							l2p_vue.l2p_span_text = 'Your new post has been created at <a href="'+response.new_post_url+'">'+response.new_post_url+'</a>.'
 						}
 						else{
-							l2p_vue.l2p_span_text = 'Post created <a href="'+response.new_post_url+'" style="display:inline-block">here</a>.'
+							l2p_vue.l2p_span_text = 'Post created! <a href="'+response.new_post_url+'">View Post</a>.'
 						}
 						l2p_vue.l2p_status = 3
 					}
