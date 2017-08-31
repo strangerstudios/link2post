@@ -84,8 +84,8 @@ function l2p_get_modules(){
 */
 function l2p_enqueue_scripts(){
 	if(current_user_can('administrator') ) {
-		wp_enqueue_script("l2p_vue", 'https://unpkg.com/vue@2.0.3/dist/vue.js', NULL, NULL);		
-		wp_enqueue_script("l2p_js_tools", plugins_url('link2post/js/link2post.js', L2P_DIR), array("jquery", "l2p_vue"), L2P_VERSION);
+		wp_enqueue_script("vue", plugins_url('link2post/js/vue.js', L2P_DIR), NULL, '2.0.3');		
+		wp_enqueue_script("l2p_js_tools", plugins_url('link2post/js/link2post.js', L2P_DIR), array("jquery", "vue"), L2P_VERSION);
 		wp_localize_script( "l2p_js_tools", "ajax_target",  admin_url( 'admin-ajax.php' ));
 	}
 }
