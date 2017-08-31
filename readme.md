@@ -1,4 +1,1 @@
-IMPORTANT: This plugin is under active development and not ready for use yet.
-=============
-
-Feel free to look around though.
+This is a WordPress plugin. You can read more in the [readme.txt](https://github.com/strangerstudios/link2post/blob/master/readme.txt).

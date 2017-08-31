@@ -1,16 +1,9 @@
 === Link2Post ===
-Contributors: strangerstudios, dparker1005, andrewza
+Contributors: strangerstudios, dlparker1005, andrewza
 Tags: cpt, gist, github
 Requires at least: 4.8
 Tested up to: 4.8.1
 Stable tag: .1
-
-============== IMPORTANT NOTE ==============
-
-This plugin is still under active development
-and not ready for use.
-
-============== IMPORTANT NOTE ==============
 
 Automatically parse submitted URLs to create posts.
 
@@ -29,14 +22,14 @@ Automatically parse submitted URLs to create posts.
 
 = How to Use =
 
-1. Click on the checkbox next to ‘Show L2P’ in admin bar or navigate to Tools>Link2Post from admin menu.
-1. Enter a URL.
+1. Click on the checkbox next to ‘Show L2P’ in admin bar or navigate to Tools -> Link2Post from admin menu.
+1. Enter a URL. Click ‘Create Post’
 1. The URL will be parsed and added as a post or CPT based on the target site.
 1. If a post was already created for that URL, you will be given the option to update the previously created post.
 
 = Settings =
 
-1. Navigate to Settings>Link2Post from admin menu. Here you will see a list of all installed modules.
+1. Navigate to Settings -> Link2Post from admin menu. Here you will see a list of all installed modules.
 1. To enable the formatting of posts based on a given module, set ‘Format Post Content’ to ‘Yes’ for that module.
 1. To create a CPT for a given module, set ‘Create and Use CPT’ to ‘Yes’ for that module. *Note: If ‘Format Post Content’ is set to ‘No’, ‘Create and Use CPT’ will also be set to ‘No’*
 1. Click ‘Save Settings’
@@ -44,17 +37,16 @@ Automatically parse submitted URLs to create posts.
 
 = Integrated Modules =
 
-Module Name:	Module URL:	Required Plugins:
-youtube		youtube.com	N/A
-gist		gist.github.com	https://wordpress.org/plugins/oembed-gist/
-codepen		codepen.io	https://wordpress.org/plugins/codepen-embedded-pen-shortcode/
-jsfiddle	jsfiddle.net	N/A
+* YouTube (youtube.com).
+* GitHub Gists (gist.github.com). Also install https://wordpress.org/plugins/oembed-gist/
+* Codepen (codepen.io). Also install https://wordpress.org/plugins/codepen-embedded-pen-shortcode/
+* jsfiddle (jsfiddle.net).
 
 = Adding Modules =
 
-1. Rename sample_module.php in the modules folder to reflect your new module’s name
+1. Copy sample_module.php in the modules folder into your own custom plugin and rename the file to reflect your new module’s name
 1. Follow the instructions given in the file that was sample_module.php to set up the module
-1. Require the file that you just made in link2post.php where it says ‘Require any custom modules here’
+1. If you'd like your module to be included in this plugin, you can do a pull request against the GitHub repository here: https://github.com/strangerstudios/link2post/
 
 
 == Frequently Asked Questions ==
