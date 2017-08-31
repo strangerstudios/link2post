@@ -1,6 +1,6 @@
 <?php
 function l2p_add_codepen_module($modules) {
-    $modules["codepen.io"] = array('callback'=>'l2p_codepen_callback', 'can_update'=>true);
+    $modules["codepen.php"] = array('host'=>'codepen.io','callback'=>'l2p_codepen_callback', 'create_cpt'=>'l2p_create_codepen_cpt', 'quick_name'=>'codepen', 'can_update'=>true);
     return $modules;
 }
 add_filter('l2p_modules', 'l2p_add_codepen_module');
@@ -38,12 +38,15 @@ function l2p_codepen_callback($url, $old_post_id=NULL, $return_result=false){
 		$author_url = 'https://codepen.io/'.$author_page;
 		
 		//add embed code to post body
-		$embed_code = '<p data-height="265" data-theme-id="0" data-slug-hash="'.substr($url, -6).'" data-default-tab="css,result" data-user="'.$author_page.'" data-embed-version="2" data-pen-title="'.$title.'" class="codepen">See the Pen <a href="'.$url.'">'.$title.'</a> by '.$author_name.' (<a href="'.$author_url.'">@'.$author_page.'</a>) on <a href="https://codepen.io">CodePen</a>.</p>
-<script async src="https://production-assets.codepen.io/assets/embed/ei.js"></script>';
+		//uses codepen shortcode plugin
+		$embed_code = '[codepen_embed height="265" theme_id="0" slug_hash="'.substr($url, -6).'" default_tab="css,result" user="'.$author_name.'"]';
+		
+		/*'<p data-height="265" data-theme-id="0" data-slug-hash="'.substr($url, -6).'" data-default-tab="css,result" data-user="'.$author_page.'" data-embed-version="2" data-pen-title="'.$title.'" class="codepen">See the Pen <a href="'.$url.'">'.$title.'</a> by '.$author_name.' (<a href="'.$author_url.'">@'.$author_page.'</a>) on <a href="https://codepen.io">CodePen</a>.</p>
+<script async src="https://production-assets.codepen.io/assets/embed/ei.js"></script>';*/
 		
 		//format post content
 		$break = " </br> ";
-		$post_content = $description.$break."\n".$embed_code."\n".$break.'This pen was made by <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.'Original Pen: <a href="'.$url.'">'.$url.'</a>';
+		$post_content = $description.$break."\n".$embed_code."\n".$break.__('This pen was made by','link2post').' <a href="'.$author_url.'">'.$author_name.'</a>.'.$break.__('Original Pen','link2post').': <a href="'.$url.'">'.$url.'</a>';
 		$post_type = (post_type_exists( "codepen" ) ? 'codepen' : 'post');
 
 		if(empty($old_post_id)){
@@ -91,16 +94,16 @@ function l2p_create_codepen_cpt() {
   register_post_type( 'codepen',
     array(
       'labels' => array(
-        'name' => __( 'Pens' ),
-        'singular_name' => __( 'Pen' ),
-        'add_new_item' => __('Add New Pen'),
-        'edit_item' => __( 'Edit Pen' ),
-        'new_item' => __( 'New Pen' ),
-		'view_item' => __( 'View Pen' ),
-		'search_items' => __( 'Search Pens' ),
-		'not_found' => __( 'No Pens Found' ),
-		'not_found_in_trash' => __( 'No Pens Found In Trash' ),
-		'all_items' => __( 'All Pens' ),
+        'name' => __( 'Pens','link2post' ),
+        'singular_name' => __( 'Pen','link2post' ),
+        'add_new_item' => __('Add New Pen','link2post'),
+        'edit_item' => __( 'Edit Pen','link2post' ),
+        'new_item' => __( 'New Pen','link2post' ),
+		'view_item' => __( 'View Pen','link2post' ),
+		'search_items' => __( 'Search Pens','link2post' ),
+		'not_found' => __( 'No Pens Found','link2post' ),
+		'not_found_in_trash' => __( 'No Pens Found In Trash','link2post' ),
+		'all_items' => __( 'All Pens','link2post' ),
       ),
       'public' => true,
       'has_archive' => true,

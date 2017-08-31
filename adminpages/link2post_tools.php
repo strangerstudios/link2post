@@ -1,7 +1,4 @@
 <?php 
-	//wrap this in some error handling to detect form submission with an empty or invalid URL
-	//use filter_var function to check URL http://php.net/manual/en/function.filter-var.php
-	
 	$l2p_js_url = plugin_dir_url( __FILE__ ) . "js/l2p_vue.js";
 	
 	
@@ -16,7 +13,7 @@
 <div class="wrap">
 	<h2>Link2Post</h2>
 	<div id="l2p_vue">
-		<label for="l2purl" v-show="l2p_status==0">URL:</label>
+		<label for="l2purl" v-show="l2p_status==0"><?php _e('URL', 'link2post' ); ?>:</label>
 		<input name="l2purl" type=text v-show="l2p_status==0" v-model="l2p_url"/>
 		<span v-html="l2p_span_text"></span>
 		<input type=button value="submit" v-show="l2p_status==0" v-on:click="l2p_submit"/>
