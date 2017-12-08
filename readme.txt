@@ -2,7 +2,7 @@
 Contributors: strangerstudios, dlparker1005, andrewza
 Tags: cpt, gist, github
 Requires at least: 4.8
-Tested up to: 4.8.1
+Tested up to: 4.9.1
 Stable tag: .1
 
 Automatically parse submitted URLs to create posts.
